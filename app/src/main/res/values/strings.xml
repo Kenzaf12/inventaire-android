@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CFConsult Inventaire</string>
+    <string name="app_company">CFConsult Casablanca</string>
+
+    <!-- Login -->
+    <string name="login_welcome">Bienvenue</string>
+    <string name="login_subtitle">Connectez-vous pour gérer vos inventaires</string>
+    <string name="login_username">Identifiant</string>
+    <string name="login_username_hint">agent@cfconsult.ma</string>
+    <string name="login_password">Mot de passe</string>
+    <string name="login_remember">Se souvenir de moi</string>
+    <string name="login_forgot">Mot de passe oublié ?</string>
+    <string name="login_submit">Se connecter</string>
+    <string name="login_biometric">Connexion biométrique</string>
+    <string name="login_version">Version 2.4.1 · © CFConsult 2026</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_greeting">Bonjour,</string>
+    <string name="dashboard_search">Rechercher un article…</string>
+    <string name="dashboard_quick_actions">Actions rapides</string>
+    <string name="dashboard_recent">Activité récente</string>
+    <string name="dashboard_see_all">Tout voir</string>
+    <string name="tile_scan">Scanner</string>
+    <string name="tile_scan_sub">QR / code-barres</string>
+    <string name="tile_new">Nouvel article</string>
+    <string name="tile_new_sub">Saisie manuelle</string>
+    <string name="tile_list">Mes articles</string>
+    <string name="tile_reports">Rapports</string>
+    <string name="tile_reports_sub">Tableaux &amp; PDF</string>
+
+    <!-- Articles -->
+    <string name="articles_title">Articles</string>
+    <string name="articles_search">Code, désignation, n° de série…</string>
+    <string name="filter_all">Tous</string>
+    <string name="status_ok">En activité</string>
+    <string name="status_warn">Hors usage</string>
+    <string name="status_err">Hors service</string>
+
+    <!-- Detail -->
+    <string name="detail_title">Détail article</string>
+    <string name="detail_section_identification">Identification</string>
+    <string name="detail_section_location">Localisation</string>
+    <string name="detail_section_state">État &amp; validation</string>
+    <string name="detail_state_current">État actuel</string>
+    <string name="detail_note_label">Note de l\'agent</string>
+    <string name="detail_validate">Valider l\'inventaire</string>
+    <string name="action_photo">Photo</string>
+    <string name="action_gemini">Gemini</string>
+    <string name="action_scan">Scanner</string>
+    <string name="badge_ia">IA</string>
+
+    <!-- Admin -->
+    <string name="admin_kicker">ADMINISTRATION</string>
+    <string name="admin_title">Tableau de bord</string>
+    <string name="admin_kpi_agents">Agents</string>
+    <string name="admin_kpi_sites">Sites</string>
+    <string name="admin_kpi_total">Total</string>
+    <string name="admin_chart_label">SAISIES — 7 DERNIERS JOURS</string>
+    <string name="admin_breakdown">Répartition par état</string>
+    <string name="admin_agents">Agents</string>
+    <string name="admin_manage">Gérer</string>
+    <string name="btn_logout">Se déconnecter</string>
+</resources>

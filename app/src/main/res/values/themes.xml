@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.InventaireCFC" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/cf_primary_dark</item>
+        <item name="colorOnPrimary">@color/cf_white</item>
+        <item name="colorPrimaryContainer">@color/cf_bg_light</item>
+        <item name="colorOnPrimaryContainer">@color/cf_primary_dark</item>
+
+        <item name="colorSecondary">@color/cf_primary</item>
+        <item name="colorOnSecondary">@color/cf_white</item>
+
+        <item name="colorTertiary">@color/cf_success</item>
+        <item name="colorOnTertiary">@color/cf_white</item>
+
+        <item name="colorError">@color/cf_error</item>
+        <item name="colorOnError">@color/cf_white</item>
+
+        <item name="android:colorBackground">@color/cf_bg_light</item>
+        <item name="colorOnBackground">@color/cf_ink</item>
+        <item name="colorSurface">@color/cf_surface</item>
+        <item name="colorOnSurface">@color/cf_ink</item>
+        <item name="colorSurfaceVariant">@color/cf_bg_light</item>
+        <item name="colorOnSurfaceVariant">@color/cf_ink_secondary</item>
+
+        <item name="android:statusBarColor">@color/cf_primary_dark</item>
+        <item name="android:navigationBarColor">@color/cf_white</item>
+        <item name="android:windowLightStatusBar">false</item>
+
+        <item name="materialButtonStyle">@style/CF.Button.Primary</item>
+        <item name="textInputStyle">@style/CF.TextInput</item>
+    </style>
+
+    <!-- Primary button — dark green-blue, large, animated press -->
+    <style name="CF.Button.Primary" parent="Widget.Material3.Button">
+        <item name="android:minHeight">56dp</item>
+        <item name="cornerRadius">16dp</item>
+        <item name="backgroundTint">@color/cf_primary_dark</item>
+        <item name="android:textColor">@color/cf_white</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="elevation">10dp</item>
+    </style>
+
+    <!-- Success button — used for "Valider" -->
+    <style name="CF.Button.Success" parent="CF.Button.Primary">
+        <item name="backgroundTint">@color/cf_success</item>
+    </style>
+
+    <!-- Outlined / secondary button -->
+    <style name="CF.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:minHeight">52dp</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="strokeColor">@color/cf_divider</item>
+        <item name="strokeWidth">1.5dp</item>
+        <item name="android:textColor">@color/cf_primary_dark</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Text input field -->
+    <style name="CF.TextInput" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">14dp</item>
+        <item name="boxCornerRadiusTopEnd">14dp</item>
+        <item name="boxCornerRadiusBottomStart">14dp</item>
+        <item name="boxCornerRadiusBottomEnd">14dp</item>
+        <item name="boxStrokeColor">@color/cf_primary</item>
+        <item name="boxStrokeWidth">1.5dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+        <item name="hintTextColor">@color/cf_primary_dark</item>
+        <item name="android:textColorHint">@color/cf_ink_tertiary</item>
+    </style>
+
+    <!-- Card -->
+    <style name="CF.Card" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="cardBackgroundColor">@color/cf_surface</item>
+        <item name="contentPadding">16dp</item>
+    </style>
+
+    <!-- Typography -->
+    <style name="CF.Text.Display" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:textColor">@color/cf_ink</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <style name="CF.Text.Title" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textColor">@color/cf_ink</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">17sp</item>
+    </style>
+
+    <style name="CF.Text.SectionLabel" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textColor">@color/cf_primary_dark</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="CF.Text.Body" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">@color/cf_ink</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="CF.Text.Caption" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textColor">@color/cf_ink_tertiary</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="CF.Text.Mono" parent="CF.Text.Body">
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:letterSpacing">0.05</item>
+    </style>
+
+</resources>

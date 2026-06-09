@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand palette -->
+    <color name="cf_primary">#5A91A8</color>
+    <color name="cf_primary_dark">#266F8E</color>
+    <color name="cf_bg_light">#D9E6E2</color>
+    <color name="cf_success">#61873B</color>
+    <color name="cf_surface">#F9F5F8</color>
+
+    <!-- Status palette -->
+    <color name="cf_status_ok">#61873B</color>
+    <color name="cf_status_warn">#E58A2B</color>
+    <color name="cf_status_err">#C04545</color>
+    <color name="cf_status_ok_bg">#1A61873B</color>
+    <color name="cf_status_warn_bg">#1AE58A2B</color>
+    <color name="cf_status_err_bg">#1AC04545</color>
+
+    <!-- Ink scale -->
+    <color name="cf_ink">#0F2A36</color>
+    <color name="cf_ink_secondary">#4A6A78</color>
+    <color name="cf_ink_tertiary">#7E97A2</color>
+    <color name="cf_divider">#1A266F8E</color>
+
+    <!-- Standard -->
+    <color name="cf_white">#FFFFFF</color>
+    <color name="cf_black">#000000</color>
+    <color name="cf_error">#B3261E</color>
+    <color name="cf_overlay_light">#26FFFFFF</color>
+    <color name="cf_overlay_lighter">#1FFFFFFF</color>
+</resources>

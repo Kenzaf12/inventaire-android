@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/cf_bg_light">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@color/cf_primary_dark"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBack"
+                style="Widget.Material3.Button.IconButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                app:backgroundTint="@color/cf_overlay_light"
+                app:cornerRadius="12dp"
+                app:icon="@android:drawable/ic_media_previous"
+                app:iconTint="@color/cf_white"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingStart="8dp"
+                android:text="Inventaire Autres"
+                android:textColor="@color/cf_white"
+                android:textSize="17sp"
+                android:textStyle="bold"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnScan"
+                style="Widget.Material3.Button.IconButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                app:backgroundTint="@color/cf_overlay_light"
+                app:cornerRadius="12dp"
+                app:icon="@android:drawable/ic_menu_camera"
+                app:iconTint="@color/cf_white"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/cf_white"
+            android:elevation="1dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp">
+
+            <EditText
+                android:id="@+id/etSearch"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_search"
+                android:hint="Rechercher..."
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:paddingHorizontal="14dp"
+                android:textSize="14sp"/>
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="16dp"
+            android:visibility="gone"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingBottom="80dp"
+            android:paddingTop="8dp"/>
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabNew"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:contentDescription="Nouveau"
+        android:src="@android:drawable/ic_input_add"
+        app:backgroundTint="@color/cf_primary_dark"
+        app:tint="@color/cf_white"/>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

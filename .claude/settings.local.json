@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Users\\\\lenovo\\\\.jdks\\\\openjdk-26.0.1\"; cd \"C:\\\\Users\\\\lenovo\\\\AndroidStudioProjects\\\\InventaireCFC\"; .\\\\gradlew.bat assembleDebug 2>&1 | Select-Object -Last 100)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Users\\\\lenovo\\\\.jdks\\\\openjdk-26.0.1\"; cd \"C:\\\\Users\\\\lenovo\\\\AndroidStudioProjects\\\\InventaireCFC\"; .\\\\gradlew.bat assembleDebug 2>&1 | Select-Object -Last 30)",
+      "WebFetch(domain:api.anthropic.com)",
+      "PowerShell(& tar -xvf $tarFile -C $extractDir)",
+      "PowerShell($tarFile = \"C:\\\\Users\\\\lenovo\\\\.claude\\\\projects\\\\C--Users-lenovo-AndroidStudioProjects-InventaireCFC\\\\2aaeebe8-76ae-48a6-ad2c-47cef3c9e76d\\\\tool-results\\\\design.html\")",
+      "PowerShell($extractDir = \"C:\\\\Users\\\\lenovo\\\\.claude\\\\projects\\\\C--Users-lenovo-AndroidStudioProjects-InventaireCFC\\\\design_extract\")",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Users\\\\lenovo\\\\.jdks\\\\openjdk-26.0.1\"; cd \"C:\\\\Users\\\\lenovo\\\\AndroidStudioProjects\\\\InventaireCFC\"; .\\\\gradlew.bat assembleDebug 2>&1 | Select-Object -Last 40)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Users\\\\lenovo\\\\.jdks\\\\openjdk-26.0.1\"; cd \"C:\\\\Users\\\\lenovo\\\\AndroidStudioProjects\\\\InventaireCFC\"; .\\\\gradlew.bat assembleDebug 2>&1 | Select-Object -Last 20)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; cd \"C:\\\\Users\\\\lenovo\\\\AndroidStudioProjects\\\\InventaireCFC\"; .\\\\gradlew.bat assembleDebug --quiet 2>&1 | Select-Object -Last 20)",
+      "PowerShell(cd C:\\\\Users\\\\lenovo\\\\AndroidStudioProjects\\\\InventaireCFC; $env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; .\\\\gradlew assembleDebug 2>&1)",
+      "PowerShell($env:JAVA_HOME = \"C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\"; cd C:\\\\Users\\\\lenovo\\\\AndroidStudioProjects\\\\InventaireCFC; .\\\\gradlew assembleDebug 2>&1 | Select-Object -Last 40)"
+    ]
+  }
+}
