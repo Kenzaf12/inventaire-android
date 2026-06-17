@@ -263,61 +263,109 @@ def qr_autres(item_id):
 # Export Excel / PDF
 # ---------------------------------------------------------------------------
 
-def make_dummy_xlsx():
-    # Fichier XLSX minimal valide (en-têtes seulement)
-    # (vrai fichier ZIP/XML — suffisant pour déclencher le download)
-    import zipfile
+def make_xlsx(title, headers, rows):
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = title
+    ws.append(headers)
+    fill = PatternFill("solid", fgColor="1F4E79")
+    font = Font(bold=True, color="FFFFFF")
+    for cell in ws[1]:
+        cell.fill = fill
+        cell.font = font
+        cell.alignment = Alignment(horizontal="center")
+    for row in rows:
+        ws.append(row)
+    for col in ws.columns:
+        ws.column_dimensions[col[0].column_letter].width = 18
     buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("[Content_Types].xml",
-            '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
-            '<Default Extension="xml" ContentType="application/xml"/>'
-            '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
-            '</Types>')
-        zf.writestr("_rels/.rels",
-            '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
-            '</Relationships>')
-        zf.writestr("xl/workbook.xml",
-            '<?xml version="1.0"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-            '<sheets><sheet name="Inventaire" sheetId="1" r:id="rId1" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>'
-            '</sheets></workbook>')
+    wb.save(buf)
     buf.seek(0)
     return buf
 
 @app.route("/api/export/equipements", methods=["GET"])
 def export_equipements():
-    return send_file(make_dummy_xlsx(),
+    headers = ["refImmo","cab","station","article","equipement","designation",
+               "modele","marque","nserie","qte","etat","valide","descTech","observation",
+               "dateInvent","heureInvent","agent"]
+    rows = [[e.get(h,"") for h in headers] for e in EQUIPEMENTS]
+    return send_file(make_xlsx("Equipements", headers, rows),
                      mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                      download_name="equipements.xlsx")
 
 @app.route("/api/export/autres", methods=["GET"])
-def export_autres():
-    return send_file(make_dummy_xlsx(),
+def export_autres_xls():
+    headers = ["cab","nlocal","designation","marque","qte","etat","valide",
+               "observation","dateInvent","heureInvent","agent"]
+    rows = [[a.get(h,"") for h in headers] for a in AUTRES]
+    return send_file(make_xlsx("Autres", headers, rows),
                      mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                      download_name="autres.xlsx")
 
 @app.route("/api/export/etat", methods=["GET"])
 def export_etat():
-    return send_file(make_dummy_xlsx(),
+    from collections import Counter
+    etats_equip = Counter(e.get("etat","") for e in EQUIPEMENTS)
+    etats_autres = Counter(a.get("etat","") for a in AUTRES)
+    headers = ["Catégorie","État","Nombre"]
+    rows = (
+        [["Équipements", k, v] for k, v in etats_equip.items()] +
+        [["Autres",      k, v] for k, v in etats_autres.items()]
+    )
+    return send_file(make_xlsx("Etat Inventaire", headers, rows),
                      mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                      download_name="etat.xlsx")
 
+def make_pdf_bytes(title, headers, rows):
+    # PDF simple sans dépendance externe (texte brut encapsulé)
+    lines = [f"INVENTAIRE CFC — {title}", "=" * 60, ""]
+    lines.append("  ".join(str(h)[:12].ljust(12) for h in headers))
+    lines.append("-" * 60)
+    for row in rows:
+        lines.append("  ".join(str(v)[:12].ljust(12) for v in row))
+    lines += ["", f"Total : {len(rows)} enregistrement(s)"]
+    content = "\n".join(lines).encode("utf-8")
+
+    # Encode le texte dans un PDF minimal valide
+    stream = content
+    obj3 = (f"BT /F1 10 Tf 40 750 Td 14 TL\n" +
+            "\n".join(f"({l.replace('(','[').replace(')',']')}) Tj T*" for l in lines) +
+            " ET").encode()
+    p = (
+        b"%PDF-1.4\n"
+        b"1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
+        b"2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n"
+        b"3 0 obj<</Type/Page/MediaBox[0 0 595 842]/Parent 2 0 R/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n"
+        + b"4 0 obj<</Length " + str(len(obj3)).encode() + b">>\nstream\n"
+        + obj3 + b"\nendstream\nendobj\n"
+        b"5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\n"
+        b"xref\n0 6\ntrailer<</Size 6/Root 1 0 R>>\nstartxref\n9\n%%EOF"
+    )
+    return io.BytesIO(p)
+
 @app.route("/api/export/pdf/equipements", methods=["GET"])
 def export_pdf_equip():
-    pdf = b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R>>endobj\nxref\n0 4\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n0\n%%EOF"
-    return send_file(io.BytesIO(pdf), mimetype="application/pdf", download_name="equipements.pdf")
+    headers = ["refImmo","cab","designation","marque","etat","agent"]
+    rows = [[e.get(h,"") for h in headers] for e in EQUIPEMENTS]
+    return send_file(make_pdf_bytes("Équipements", headers, rows),
+                     mimetype="application/pdf", download_name="equipements.pdf")
 
 @app.route("/api/export/pdf/autres", methods=["GET"])
 def export_pdf_autres():
-    pdf = b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R>>endobj\nxref\n0 4\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n0\n%%EOF"
-    return send_file(io.BytesIO(pdf), mimetype="application/pdf", download_name="autres.pdf")
+    headers = ["cab","nlocal","designation","marque","etat","agent"]
+    rows = [[a.get(h,"") for h in headers] for a in AUTRES]
+    return send_file(make_pdf_bytes("Autres", headers, rows),
+                     mimetype="application/pdf", download_name="autres.pdf")
 
 @app.route("/api/export/pdf/global", methods=["GET"])
 def export_pdf_global():
-    pdf = b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R>>endobj\nxref\n0 4\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n0\n%%EOF"
-    return send_file(io.BytesIO(pdf), mimetype="application/pdf", download_name="rapport_global.pdf")
+    headers = ["Type","cab","designation","etat","valide","agent"]
+    rows  = [["Équip", e.get("cab",""), e.get("designation",""), e.get("etat",""), e.get("valide",""), e.get("agent","")] for e in EQUIPEMENTS]
+    rows += [["Autre", a.get("cab",""), a.get("designation",""), a.get("etat",""), a.get("valide",""), a.get("agent","")] for a in AUTRES]
+    return send_file(make_pdf_bytes("Rapport Global", headers, rows),
+                     mimetype="application/pdf", download_name="rapport_global.pdf")
 
 # ---------------------------------------------------------------------------
 # Admin

@@ -124,22 +124,28 @@
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnCamera"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="48dp"
                             android:layout_weight="1"
                             android:layout_marginEnd="6dp"
                             android:text="Caméra"
+                            android:textAllCaps="false"
+                            android:textSize="13sp"
                             app:backgroundTint="#5A91A8"
-                            app:icon="@android:drawable/ic_menu_camera"/>
+                            app:icon="@android:drawable/ic_menu_camera"
+                            app:iconSize="18dp"/>
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnGallery"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="48dp"
                             android:layout_weight="1"
                             android:layout_marginStart="6dp"
                             android:text="Galerie"
+                            android:textAllCaps="false"
+                            android:textSize="13sp"
                             app:backgroundTint="#266F8E"
-                            app:icon="@android:drawable/ic_menu_gallery"/>
+                            app:icon="@android:drawable/ic_menu_gallery"
+                            app:iconSize="18dp"/>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
