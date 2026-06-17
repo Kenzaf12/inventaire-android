@@ -83,6 +83,8 @@
                             android:layout_marginBottom="8dp"
                             android:backgroundTint="@color/cf_primary"
                             android:text="📂 Importer Équipements (Excel)"
+                            android:textAllCaps="false"
+                            android:textSize="12sp"
                             android:textColor="@color/cf_white"/>
 
                         <Button
@@ -91,6 +93,8 @@
                             android:layout_height="48dp"
                             android:backgroundTint="@color/cf_primary_dark"
                             android:text="📂 Importer Autres (Excel)"
+                            android:textAllCaps="false"
+                            android:textSize="12sp"
                             android:textColor="@color/cf_white"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>

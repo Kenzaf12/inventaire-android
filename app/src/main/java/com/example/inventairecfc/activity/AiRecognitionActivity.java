@@ -1,6 +1,8 @@
 package com.example.inventairecfc.activity;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -14,6 +16,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import com.example.inventairecfc.R;
 import com.example.inventairecfc.api.ApiClient;
@@ -63,6 +66,12 @@ public class AiRecognitionActivity extends AppCompatActivity {
                 }
             });
 
+    private final ActivityResultLauncher<String> cameraPermLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+                if (granted) launchCameraIntent();
+                else Toast.makeText(this, "Permission caméra requise", Toast.LENGTH_SHORT).show();
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,6 +101,15 @@ public class AiRecognitionActivity extends AppCompatActivity {
     }
 
     private void openCamera() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            launchCameraIntent();
+        } else {
+            cameraPermLauncher.launch(Manifest.permission.CAMERA);
+        }
+    }
+
+    private void launchCameraIntent() {
         File photoFile = new File(getExternalCacheDir(),
                 "ai_photo_" + System.currentTimeMillis() + ".jpg");
         cameraImageUri = FileProvider.getUriForFile(this,

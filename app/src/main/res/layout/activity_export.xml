@@ -77,6 +77,8 @@
                         android:layout_marginBottom="8dp"
                         android:backgroundTint="@color/cf_primary"
                         android:text="📊 Équipements (.xlsx)"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
                         android:textColor="@color/cf_white"/>
 
                     <Button
@@ -86,6 +88,8 @@
                         android:layout_marginBottom="8dp"
                         android:backgroundTint="@color/cf_primary"
                         android:text="📊 Autres (.xlsx)"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
                         android:textColor="@color/cf_white"/>
 
                     <Button
@@ -94,6 +98,8 @@
                         android:layout_height="48dp"
                         android:backgroundTint="@color/cf_primary_dark"
                         android:text="📊 État (.xlsx)"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
                         android:textColor="@color/cf_white"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -130,6 +136,8 @@
                         android:layout_marginBottom="8dp"
                         android:backgroundTint="@color/cf_success"
                         android:text="📄 Équipements (PDF)"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
                         android:textColor="@color/cf_white"/>
 
                     <Button
@@ -139,6 +147,8 @@
                         android:layout_marginBottom="8dp"
                         android:backgroundTint="@color/cf_success"
                         android:text="📄 Autres (PDF)"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
                         android:textColor="@color/cf_white"/>
 
                     <Button
@@ -147,6 +157,8 @@
                         android:layout_height="48dp"
                         android:backgroundTint="@color/cf_primary_dark"
                         android:text="📄 Rapport Global (PDF)"
+                        android:textAllCaps="false"
+                        android:textSize="13sp"
                         android:textColor="@color/cf_white"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

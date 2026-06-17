@@ -32,6 +32,17 @@
             android:textColor="@color/cf_white"
             android:textSize="17sp"
             android:textStyle="bold"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDelete"
+            style="Widget.Material3.Button.IconButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:visibility="gone"
+            app:backgroundTint="#C0392B"
+            app:cornerRadius="12dp"
+            app:icon="@android:drawable/ic_menu_delete"
+            app:iconTint="@color/cf_white"/>
     </LinearLayout>
 
     <ScrollView
@@ -365,17 +376,6 @@
                     android:layout_height="wrap_content"
                     android:minLines="2"/>
             </com.google.android.material.textfield.TextInputLayout>
-
-            <Button
-                android:id="@+id/btnDelete"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="#C0392B"
-                android:text="🗑 Supprimer"
-                android:textColor="@color/cf_white"
-                android:textSize="14sp"
-                android:visibility="gone"/>
 
             <Button
                 android:id="@+id/btnSave"

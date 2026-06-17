@@ -1,5 +1,6 @@
 package com.example.inventairecfc.activity;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.widget.Button;
@@ -60,16 +61,31 @@ public class ExportActivity extends AppCompatActivity {
                 downloadFile(extApiService.exportPdfGlobal(token), "rapport_global.pdf"));
     }
 
+    private File getDownloadDir() {
+        // API 29+ : app-scoped external storage, no permission needed
+        // API < 29 : public Downloads (requires WRITE_EXTERNAL_STORAGE already declared)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+            if (dir != null) { dir.mkdirs(); return dir; }
+        }
+        File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        if (dir != null) dir.mkdirs();
+        return dir;
+    }
+
     private void downloadFile(Call<ResponseBody> call, String filename) {
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> c, Response<ResponseBody> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     try {
-                        File downloadsDir = Environment.getExternalStoragePublicDirectory(
-                                Environment.DIRECTORY_DOWNLOADS);
-                        if (!downloadsDir.exists()) downloadsDir.mkdirs();
-                        File file = new File(downloadsDir, filename);
+                        File dir = getDownloadDir();
+                        if (dir == null) {
+                            Toast.makeText(ExportActivity.this,
+                                    "Impossible d'accéder au stockage", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        File file = new File(dir, filename);
                         InputStream is = response.body().byteStream();
                         FileOutputStream fos = new FileOutputStream(file);
                         byte[] buf = new byte[8192]; int len;
@@ -77,21 +93,25 @@ public class ExportActivity extends AppCompatActivity {
                         fos.close();
                         is.close();
                         Toast.makeText(ExportActivity.this,
-                                "Fichier sauvegardé: " + filename, Toast.LENGTH_LONG).show();
+                                "✅ Fichier sauvegardé :\n" + file.getAbsolutePath(),
+                                Toast.LENGTH_LONG).show();
                     } catch (Exception e) {
                         Toast.makeText(ExportActivity.this,
-                                "Erreur de sauvegarde", Toast.LENGTH_SHORT).show();
+                                "Erreur de sauvegarde : " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Toast.makeText(ExportActivity.this,
-                            "Erreur d'export", Toast.LENGTH_SHORT).show();
+                            "Erreur d'export (code " + response.code() + ")",
+                            Toast.LENGTH_SHORT).show();
                 }
             }
             @Override
             public void onFailure(Call<ResponseBody> c, Throwable t) {
                 Toast.makeText(ExportActivity.this,
-                        "Erreur de connexion", Toast.LENGTH_SHORT).show();
+                        "Erreur de connexion : " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 }
+

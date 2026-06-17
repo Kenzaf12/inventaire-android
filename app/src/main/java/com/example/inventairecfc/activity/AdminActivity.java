@@ -2,11 +2,16 @@ package com.example.inventairecfc.activity;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,6 +25,7 @@ import com.example.inventairecfc.adapter.AgentAdapter;
 import com.example.inventairecfc.api.ApiClient;
 import com.example.inventairecfc.api.ApiService;
 import com.example.inventairecfc.api.ExtendedApiService;
+import com.example.inventairecfc.model.Activite;
 import com.example.inventairecfc.model.Agent;
 import com.example.inventairecfc.utils.SessionManager;
 import com.google.android.material.button.MaterialButton;
@@ -138,7 +144,7 @@ public class AdminActivity extends AppCompatActivity {
                     List<Agent> agents = response.body();
                     tvAgentsTitle.setText("Agents (" + agents.size() + " total)");
                     agentAdapter = new AgentAdapter(agents, AdminActivity.this, agent ->
-                            showDeleteAgentDialog(agent));
+                            showAgentDetails(agent));
                     agentsRv.setAdapter(agentAdapter);
                 }
             }
@@ -147,6 +153,184 @@ public class AdminActivity extends AppCompatActivity {
                 Toast.makeText(AdminActivity.this, "Erreur de chargement", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void showAgentDetails(Agent agent) {
+        String token = "Bearer " + sessionManager.getToken();
+        apiService.getActivitesByAgent(token, agent.getId()).enqueue(new Callback<List<Activite>>() {
+            @Override
+            public void onResponse(Call<List<Activite>> call, Response<List<Activite>> response) {
+                List<Activite> activites = (response.isSuccessful() && response.body() != null)
+                        ? response.body() : new ArrayList<>();
+                runOnUiThread(() -> showAgentDialog(agent, activites));
+            }
+            @Override
+            public void onFailure(Call<List<Activite>> call, Throwable t) {
+                runOnUiThread(() -> showAgentDialog(agent, new ArrayList<>()));
+            }
+        });
+    }
+
+    private void showAgentDialog(Agent agent, List<Activite> activites) {
+        int dp = (int) getResources().getDisplayMetrics().density;
+        int pad = 16 * dp;
+
+        ScrollView scrollView = new ScrollView(this);
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(pad, pad, pad, pad / 2);
+
+        // Avatar avec initiales
+        FrameLayout avatarFrame = new FrameLayout(this);
+        LinearLayout.LayoutParams afp = new LinearLayout.LayoutParams(56 * dp, 56 * dp);
+        afp.gravity = Gravity.CENTER_HORIZONTAL;
+        afp.bottomMargin = 8 * dp;
+        avatarFrame.setLayoutParams(afp);
+        avatarFrame.setBackgroundColor(Color.parseColor("#266F8E"));
+        // cercle via padding
+        avatarFrame.setPadding(4 * dp, 4 * dp, 4 * dp, 4 * dp);
+
+        TextView tvInitials = new TextView(this);
+        String initials = "";
+        if (agent.getPrenom() != null && !agent.getPrenom().isEmpty())
+            initials += agent.getPrenom().substring(0, 1).toUpperCase();
+        if (agent.getNom() != null && !agent.getNom().isEmpty())
+            initials += agent.getNom().substring(0, 1).toUpperCase();
+        tvInitials.setText(initials);
+        tvInitials.setTextColor(Color.WHITE);
+        tvInitials.setTextSize(20);
+        tvInitials.setTypeface(null, Typeface.BOLD);
+        tvInitials.setGravity(Gravity.CENTER);
+        tvInitials.setLayoutParams(new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        avatarFrame.addView(tvInitials);
+        layout.addView(avatarFrame);
+
+        // Rôle badge
+        TextView tvRole = new TextView(this);
+        tvRole.setText("ADMIN".equals(agent.getRole()) ? "● ADMINISTRATEUR" : "● AGENT");
+        tvRole.setTextColor("ADMIN".equals(agent.getRole())
+                ? Color.parseColor("#C0392B") : Color.parseColor("#27AE60"));
+        tvRole.setTextSize(11);
+        tvRole.setTypeface(null, Typeface.BOLD);
+        tvRole.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        rlp.bottomMargin = 12 * dp;
+        tvRole.setLayoutParams(rlp);
+        layout.addView(tvRole);
+
+        // Séparateur
+        layout.addView(makeSeparator(dp));
+
+        // Infos
+        addInfoRow(layout, "Login", agent.getLogin(), dp);
+        addInfoRow(layout, "Prénom", agent.getPrenom(), dp);
+        addInfoRow(layout, "Nom", agent.getNom(), dp);
+
+        // Séparateur
+        layout.addView(makeSeparator(dp));
+
+        // Statistiques
+        long inventaireCount = 0;
+        for (Activite a : activites) {
+            if ("CREATE".equals(a.getAction()) || "UPDATE".equals(a.getAction())) inventaireCount++;
+        }
+        addInfoRow(layout, "Total activités", String.valueOf(activites.size()), dp);
+        addInfoRow(layout, "Inventaires réalisés", String.valueOf(inventaireCount), dp);
+
+        // Dernières activités
+        if (!activites.isEmpty()) {
+            TextView tvActTitle = new TextView(this);
+            tvActTitle.setText("DERNIÈRES ACTIVITÉS");
+            tvActTitle.setTextColor(Color.parseColor("#266F8E"));
+            tvActTitle.setTextSize(11);
+            tvActTitle.setTypeface(null, Typeface.BOLD);
+            LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            tlp.topMargin = 12 * dp;
+            tlp.bottomMargin = 6 * dp;
+            tvActTitle.setLayoutParams(tlp);
+            layout.addView(tvActTitle);
+
+            int start = Math.max(0, activites.size() - 5);
+            for (int i = activites.size() - 1; i >= start; i--) {
+                Activite a = activites.get(i);
+                TextView tvAct = new TextView(this);
+                String date = a.getDateHeure() != null ? a.getDateHeure().replace("T", " ") : "";
+                tvAct.setText("• [" + a.getAction() + "] " + a.getDetail()
+                        + (date.isEmpty() ? "" : "\n  " + date));
+                tvAct.setTextSize(12);
+                tvAct.setTextColor(Color.parseColor("#555555"));
+                LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                alp.bottomMargin = 6 * dp;
+                tvAct.setLayoutParams(alp);
+                layout.addView(tvAct);
+            }
+        } else {
+            TextView tvNoAct = new TextView(this);
+            tvNoAct.setText("Aucune activité enregistrée");
+            tvNoAct.setTextSize(12);
+            tvNoAct.setTextColor(Color.parseColor("#AAAAAA"));
+            tvNoAct.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams nalp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            nalp.topMargin = 8 * dp;
+            tvNoAct.setLayoutParams(nalp);
+            layout.addView(tvNoAct);
+        }
+
+        scrollView.addView(layout);
+
+        String fullName = ((agent.getPrenom() != null ? agent.getPrenom() : "") + " "
+                + (agent.getNom() != null ? agent.getNom() : "")).trim();
+
+        new AlertDialog.Builder(this)
+                .setTitle(fullName)
+                .setView(scrollView)
+                .setNeutralButton("Fermer", null)
+                .setNegativeButton("🗑 Supprimer", (d, w) -> showDeleteAgentDialog(agent))
+                .show();
+    }
+
+    private View makeSeparator(int dp) {
+        android.view.View sep = new android.view.View(this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 1);
+        lp.topMargin = 8 * dp;
+        lp.bottomMargin = 8 * dp;
+        sep.setLayoutParams(lp);
+        sep.setBackgroundColor(Color.parseColor("#E0E0E0"));
+        return sep;
+    }
+
+    private void addInfoRow(LinearLayout parent, String label, String value, int dp) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        rp.bottomMargin = 4 * dp;
+        row.setLayoutParams(rp);
+
+        TextView tvLabel = new TextView(this);
+        tvLabel.setText(label + " :");
+        tvLabel.setTextSize(13);
+        tvLabel.setTextColor(Color.parseColor("#888888"));
+        tvLabel.setLayoutParams(new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1.2f));
+
+        TextView tvValue = new TextView(this);
+        tvValue.setText(value != null && !value.isEmpty() ? value : "—");
+        tvValue.setTextSize(13);
+        tvValue.setTextColor(Color.parseColor("#1A2B35"));
+        tvValue.setTypeface(null, Typeface.BOLD);
+        tvValue.setLayoutParams(new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 2f));
+
+        row.addView(tvLabel);
+        row.addView(tvValue);
+        parent.addView(row);
     }
 
     private void showDeleteAgentDialog(Agent agent) {

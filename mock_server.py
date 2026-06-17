@@ -69,10 +69,18 @@ AGENTS = [
 ]
 
 ACTIVITES = [
-    {"id": 1, "agentId": 1, "action": "LOGIN", "detail": "Connexion au système", "date": "2025-06-17T09:00:00"},
-    {"id": 2, "agentId": 1, "action": "CREATE", "detail": "Création équipement CAB001", "date": "2025-06-17T09:05:00"},
-    {"id": 3, "agentId": 2, "action": "LOGIN", "detail": "Connexion au système", "date": "2025-06-17T10:00:00"},
-    {"id": 4, "agentId": 2, "action": "UPDATE", "detail": "Modification équipement CAB003", "date": "2025-06-17T10:30:00"},
+    {"id": 1, "agentId": 1, "action": "LOGIN",  "detail": "Connexion au système",              "dateHeure": "2025-06-17T08:55:00"},
+    {"id": 2, "agentId": 1, "action": "CREATE", "detail": "Création équipement CAB001",         "dateHeure": "2025-06-17T09:05:00"},
+    {"id": 3, "agentId": 1, "action": "CREATE", "detail": "Création équipement CAB002",         "dateHeure": "2025-06-17T09:20:00"},
+    {"id": 4, "agentId": 1, "action": "UPDATE", "detail": "Modification équipement CAB001",     "dateHeure": "2025-06-17T09:45:00"},
+    {"id": 5, "agentId": 1, "action": "CREATE", "detail": "Création équipement CAB004",         "dateHeure": "2025-06-17T10:10:00"},
+    {"id": 6, "agentId": 2, "action": "LOGIN",  "detail": "Connexion au système",              "dateHeure": "2025-06-17T10:00:00"},
+    {"id": 7, "agentId": 2, "action": "CREATE", "detail": "Création équipement CAB003",         "dateHeure": "2025-06-17T10:15:00"},
+    {"id": 8, "agentId": 2, "action": "UPDATE", "detail": "Modification équipement CAB003",     "dateHeure": "2025-06-17T10:30:00"},
+    {"id": 9, "agentId": 2, "action": "CREATE", "detail": "Création équipement CAB005",         "dateHeure": "2025-06-17T11:00:00"},
+    {"id":10, "agentId": 3, "action": "LOGIN",  "detail": "Connexion au système",              "dateHeure": "2025-06-17T14:00:00"},
+    {"id":11, "agentId": 3, "action": "CREATE", "detail": "Création autre CAB-A001",            "dateHeure": "2025-06-17T14:10:00"},
+    {"id":12, "agentId": 3, "action": "CREATE", "detail": "Création autre CAB-A002",            "dateHeure": "2025-06-17T14:25:00"},
 ]
 
 LOCALISATIONS = [
