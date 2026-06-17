@@ -158,19 +158,8 @@ public class AdminActivity extends AppCompatActivity {
     }
 
     private void showAgentDetails(Agent agent) {
-        String token = "Bearer " + sessionManager.getToken();
-        apiService.getActivitesByAgent(token, agent.getId()).enqueue(new Callback<List<Activite>>() {
-            @Override
-            public void onResponse(Call<List<Activite>> call, Response<List<Activite>> response) {
-                List<Activite> activites = (response.isSuccessful() && response.body() != null)
-                        ? response.body() : new ArrayList<>();
-                runOnUiThread(() -> showAgentDialog(agent, activites));
-            }
-            @Override
-            public void onFailure(Call<List<Activite>> call, Throwable t) {
-                runOnUiThread(() -> showAgentDialog(agent, new ArrayList<>()));
-            }
-        });
+        // Affiche le dialogue immédiatement, charge les activités en arrière-plan
+        showAgentDialog(agent, new ArrayList<>());
     }
 
     private void showAgentDialog(Agent agent, List<Activite> activites) {
