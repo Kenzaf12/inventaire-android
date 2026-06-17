@@ -4,16 +4,12 @@ plugins {
 
 android {
     namespace = "com.example.inventairecfc"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.inventairecfc"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -61,6 +57,9 @@ dependencies {
     // GridLayout pour le dashboard
     implementation("androidx.gridlayout:gridlayout:1.0.0")
 
+    // RecyclerView pour les listes
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
 
-
+    // Glide pour l'affichage des images
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 }

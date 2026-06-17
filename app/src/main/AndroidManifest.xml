@@ -38,6 +38,8 @@
         <activity android:name=".activity.DetailEquipementActivity"/>
         <activity android:name=".activity.DetailAutresActivity"/>
         <activity android:name=".activity.AdminActivity"/>
+        <activity android:name=".activity.ExportActivity"/>
+        <activity android:name=".activity.AiRecognitionActivity"/>
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

@@ -15,7 +15,7 @@ public class MainActivity extends AppCompatActivity {
 
     private SessionManager sessionManager;
     private TextView tvAvatarInitials, tvUserName;
-    private MaterialCardView cardInventEquipement, cardInventAutres, cardEtats, cardAdmin;
+    private MaterialCardView cardInventEquipement, cardInventAutres, cardEtats, cardAdmin, cardAi;
     private FloatingActionButton fabScan;
     private MaterialButton btnLogout;
 
@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
         cardInventAutres = findViewById(R.id.cardInventAutres);
         cardEtats = findViewById(R.id.cardEtats);
         cardAdmin = findViewById(R.id.cardAdmin);
+        cardAi = findViewById(R.id.cardAi);
         fabScan = findViewById(R.id.fab_scan);
         btnLogout = findViewById(R.id.btn_logout_main);
 
@@ -60,6 +61,9 @@ public class MainActivity extends AppCompatActivity {
             cardAdmin.setOnClickListener(v ->
                     startActivity(new Intent(this, AdminActivity.class)));
         }
+
+        cardAi.setOnClickListener(v ->
+                startActivity(new Intent(this, AiRecognitionActivity.class)));
 
         fabScan.setOnClickListener(v ->
                 startActivity(new Intent(this, ScanActivity.class)));
