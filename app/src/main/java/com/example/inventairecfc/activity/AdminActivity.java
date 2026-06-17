@@ -8,7 +8,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.text.InputType;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -229,6 +231,60 @@ public class AdminActivity extends AppCompatActivity {
         addInfoRow(layout, "Prénom", agent.getPrenom(), dp);
         addInfoRow(layout, "Nom", agent.getNom(), dp);
 
+        // Mot de passe (masqué avec bouton afficher)
+        LinearLayout pwRow = new LinearLayout(this);
+        pwRow.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams pwlp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        pwlp.bottomMargin = 6 * dp;
+        pwRow.setLayoutParams(pwlp);
+
+        TextView tvPwLabel = new TextView(this);
+        tvPwLabel.setText("Mot de passe : ");
+        tvPwLabel.setTextSize(13);
+        tvPwLabel.setTextColor(Color.parseColor("#888888"));
+        tvPwLabel.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        pwRow.addView(tvPwLabel);
+
+        TextView tvPwValue = new TextView(this);
+        String pwd = (agent.getPassword() != null && !agent.getPassword().isEmpty())
+                ? agent.getPassword() : "(non défini)";
+        tvPwValue.setText("••••••••");
+        tvPwValue.setTextSize(13);
+        tvPwValue.setTextColor(Color.parseColor("#333333"));
+        tvPwValue.setTypeface(null, Typeface.BOLD);
+        LinearLayout.LayoutParams pvlp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        tvPwValue.setLayoutParams(pvlp);
+        pwRow.addView(tvPwValue);
+
+        TextView tvShowPw = new TextView(this);
+        tvShowPw.setText("Afficher");
+        tvShowPw.setTextSize(12);
+        tvShowPw.setTextColor(Color.parseColor("#266F8E"));
+        tvShowPw.setPadding(8 * dp, 0, 0, 0);
+        final boolean[] shown = {false};
+        tvShowPw.setOnClickListener(v2 -> {
+            shown[0] = !shown[0];
+            tvPwValue.setText(shown[0] ? pwd : "••••••••");
+            tvShowPw.setText(shown[0] ? "Masquer" : "Afficher");
+        });
+        pwRow.addView(tvShowPw);
+        layout.addView(pwRow);
+
+        // Bouton changer mot de passe
+        Button btnChangePw = new Button(this);
+        btnChangePw.setText("Changer le mot de passe");
+        btnChangePw.setTextSize(12);
+        btnChangePw.setAllCaps(false);
+        LinearLayout.LayoutParams bclp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        bclp.bottomMargin = 4 * dp;
+        btnChangePw.setLayoutParams(bclp);
+        btnChangePw.setOnClickListener(v2 -> showChangePasswordDialog(agent));
+        layout.addView(btnChangePw);
+
         // Séparateur
         layout.addView(makeSeparator(dp));
 
@@ -332,6 +388,40 @@ public class AdminActivity extends AppCompatActivity {
         row.addView(tvLabel);
         row.addView(tvValue);
         parent.addView(row);
+    }
+
+    private void showChangePasswordDialog(Agent agent) {
+        EditText etNewPw = new EditText(this);
+        etNewPw.setHint("Nouveau mot de passe");
+        etNewPw.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        etNewPw.setPadding(pad, pad / 2, pad, pad / 2);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Changer le mot de passe")
+                .setMessage("Agent : " + agent.getPrenom() + " " + agent.getNom())
+                .setView(etNewPw)
+                .setPositiveButton("Confirmer", (d, w) -> {
+                    String newPw = etNewPw.getText().toString().trim();
+                    if (newPw.isEmpty()) {
+                        Toast.makeText(this, "Mot de passe vide", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    agent.setPassword(newPw);
+                    String token = "Bearer " + sessionManager.getToken();
+                    apiService.createAgent(token, agent).enqueue(new Callback<Agent>() {
+                        @Override public void onResponse(Call<Agent> call, Response<Agent> response) {
+                            Toast.makeText(AdminActivity.this,
+                                    response.isSuccessful() ? "Mot de passe mis à jour" : "Erreur",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                        @Override public void onFailure(Call<Agent> call, Throwable t) {
+                            Toast.makeText(AdminActivity.this, "Erreur de connexion", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                })
+                .setNegativeButton("Annuler", null)
+                .show();
     }
 
     private void showDeleteAgentDialog(Agent agent) {
