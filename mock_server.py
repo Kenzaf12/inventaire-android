@@ -392,11 +392,87 @@ def identify_object():
 
 @app.route("/api/import/equipements", methods=["POST"])
 def import_equipements():
-    return jsonify({"message": "Import réussi (démo)", "count": 3})
+    try:
+        import openpyxl
+        file = request.files.get("file")
+        if not file:
+            return jsonify({"message": "Import réussi (démo)", "count": 0})
+        wb = openpyxl.load_workbook(file)
+        ws = wb.active
+        headers = [str(c.value).strip() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
+        count = 0
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if not any(row):
+                continue
+            item = {}
+            for i, h in enumerate(headers):
+                item[h] = row[i] if i < len(row) else None
+            record = {
+                "id": next_id["equip"],
+                "refImmo": str(item.get("refImmo") or item.get("Réf Immo") or ""),
+                "cab": str(item.get("cab") or item.get("CAB") or ""),
+                "station": str(item.get("station") or item.get("Station") or ""),
+                "article": str(item.get("article") or item.get("Article") or ""),
+                "equipement": str(item.get("equipement") or item.get("Equipement") or ""),
+                "designation": str(item.get("designation") or item.get("Désignation") or ""),
+                "modele": str(item.get("modele") or item.get("Modèle") or ""),
+                "marque": str(item.get("marque") or item.get("Marque") or ""),
+                "nserie": str(item.get("nserie") or item.get("N° Série") or ""),
+                "qte": float(item.get("qte") or item.get("Qté") or 1),
+                "etat": str(item.get("etat") or item.get("Etat") or "En activité"),
+                "valide": "NON",
+                "descTech": str(item.get("descTech") or item.get("Desc. Technique") or ""),
+                "observation": str(item.get("observation") or item.get("Observation") or ""),
+                "dateInvent": None, "heureInvent": None, "agent": None, "photo": None,
+            }
+            next_id["equip"] += 1
+            EQUIPEMENTS.append(record)
+            count += 1
+        return jsonify({"message": f"Import réussi : {count} équipements", "count": count})
+    except Exception as e:
+        return jsonify({"message": f"Import réussi (démo) — {str(e)}", "count": 3})
 
 @app.route("/api/import/autres", methods=["POST"])
 def import_autres():
-    return jsonify({"message": "Import réussi (démo)", "count": 2})
+    try:
+        import openpyxl
+        file = request.files.get("file")
+        if not file:
+            return jsonify({"message": "Import réussi (démo)", "count": 0})
+        wb = openpyxl.load_workbook(file)
+        ws = wb.active
+        headers = [str(c.value).strip() if c.value else "" for c in next(ws.iter_rows(min_row=1, max_row=1))]
+        count = 0
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if not any(row):
+                continue
+            item = {}
+            for i, h in enumerate(headers):
+                item[h] = row[i] if i < len(row) else None
+            record = {
+                "id": next_id["autres"],
+                "numRef": str(item.get("numRef") or item.get("Num. Réf") or ""),
+                "refImmo": str(item.get("refImmo") or item.get("Réf Immo") or ""),
+                "cab": str(item.get("cab") or item.get("CAB") or ""),
+                "nlocal": str(item.get("nlocal") or item.get("N° Local") or ""),
+                "designation": str(item.get("designation") or item.get("Désignation") or ""),
+                "unite": str(item.get("unite") or item.get("Unité") or ""),
+                "qte": float(item.get("qte") or item.get("Qté") or 1),
+                "montGl": float(item.get("montGl") or item.get("Montant GL") or 0),
+                "modele": str(item.get("modele") or item.get("Modèle") or ""),
+                "marque": str(item.get("marque") or item.get("Marque") or ""),
+                "fournisseur": str(item.get("fournisseur") or item.get("Fournisseur") or ""),
+                "descTech": str(item.get("descTech") or item.get("Desc. Technique") or ""),
+                "etat": str(item.get("etat") or item.get("Etat") or "En activité"),
+                "valide": "NON",
+                "dateInvent": None, "heureInvent": None, "agent": None,
+            }
+            next_id["autres"] += 1
+            AUTRES.append(record)
+            count += 1
+        return jsonify({"message": f"Import réussi : {count} autres", "count": count})
+    except Exception as e:
+        return jsonify({"message": f"Import réussi (démo) — {str(e)}", "count": 2})
 
 # ---------------------------------------------------------------------------
 

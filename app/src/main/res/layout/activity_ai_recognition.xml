@@ -149,9 +149,10 @@
                 android:id="@+id/btnAnalyze"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:text="Analyser avec l'IA Gemini"
-                android:textSize="15sp"
+                android:text="Analyser avec Gemini IA"
+                android:textSize="14sp"
                 android:textStyle="bold"
+                android:textAllCaps="false"
                 android:enabled="false"
                 app:backgroundTint="#61873B"
                 app:icon="@android:drawable/ic_menu_search"
@@ -252,7 +253,8 @@
                         android:id="@+id/btnUseResult"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Utiliser pour un nouvel équipement"
+                        android:text="Utiliser ce résultat"
+                        android:textAllCaps="false"
                         app:backgroundTint="#5A91A8"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
