@@ -9,7 +9,9 @@ import java.util.concurrent.TimeUnit;
 public class ApiClient {
 
 
-    private static final String BASE_URL = "http://192.168.11.108:8080/";
+    // 10.0.2.2 = localhost du PC depuis l'émulateur Android
+    // Pour vrai téléphone sur le même WiFi : remplace par ton IP locale (ex: 192.168.1.X)
+    private static final String BASE_URL = "http://10.0.2.2:8080/";
     private static Retrofit retrofit = null;
 
     public static Retrofit getClient() {
