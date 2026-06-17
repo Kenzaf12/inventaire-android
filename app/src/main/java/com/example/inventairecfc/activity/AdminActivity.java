@@ -10,7 +10,6 @@ import android.view.Gravity;
 import android.view.View;
 import android.text.InputType;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -273,11 +272,13 @@ public class AdminActivity extends AppCompatActivity {
         pwRow.addView(tvShowPw);
         layout.addView(pwRow);
 
-        // Bouton changer mot de passe
-        Button btnChangePw = new Button(this);
-        btnChangePw.setText("Changer le mot de passe");
-        btnChangePw.setTextSize(12);
-        btnChangePw.setAllCaps(false);
+        // Bouton changer mot de passe (TextView stylé pour éviter crash de thème)
+        TextView btnChangePw = new TextView(this);
+        btnChangePw.setText("🔑 Changer le mot de passe");
+        btnChangePw.setTextSize(13);
+        btnChangePw.setTextColor(Color.parseColor("#266F8E"));
+        btnChangePw.setTypeface(null, Typeface.BOLD);
+        btnChangePw.setPadding(0, 6 * dp, 0, 6 * dp);
         LinearLayout.LayoutParams bclp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         bclp.bottomMargin = 4 * dp;

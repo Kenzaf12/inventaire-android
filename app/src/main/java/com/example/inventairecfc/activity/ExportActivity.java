@@ -78,13 +78,25 @@ public class ExportActivity extends AppCompatActivity {
     }
 
     private void shareFile(File file, String mimeType) {
-        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".provider", file);
-        Intent shareIntent = new Intent(Intent.ACTION_SEND);
-        shareIntent.setType(mimeType);
-        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Export Inventaire CFC — " + file.getName());
-        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(Intent.createChooser(shareIntent, "Partager via..."));
+        try {
+            // Copie dans le cache pour que FileProvider puisse le partager
+            File cacheFile = new File(getExternalCacheDir(), file.getName());
+            java.io.FileInputStream fis = new java.io.FileInputStream(file);
+            FileOutputStream fos = new FileOutputStream(cacheFile);
+            byte[] buf = new byte[8192]; int len;
+            while ((len = fis.read(buf)) != -1) fos.write(buf, 0, len);
+            fis.close(); fos.close();
+
+            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".provider", cacheFile);
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType(mimeType);
+            shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Export Inventaire CFC — " + file.getName());
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(shareIntent, "Partager via..."));
+        } catch (Exception e) {
+            Toast.makeText(this, "Erreur partage : " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void downloadFile(Call<ResponseBody> call, String filename, String mimeType) {
