@@ -183,7 +183,6 @@ public interface ApiService {
     @GET("api/export/etat")
     Call<ResponseBody> exportEtat(@Header("Authorization") String token);
 
-    // Gemini AI
     @POST("api/gemini/identify")
     Call<Map<String, String>> identifyObject(
             @Header("Authorization") String token,

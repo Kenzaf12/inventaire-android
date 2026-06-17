@@ -51,11 +51,14 @@ public class ExportActivity extends AppCompatActivity {
         String token = "Bearer " + sessionManager.getToken();
 
         btnXlsxEquip.setOnClickListener(v ->
-                downloadFile(apiService.exportEquipements(token), "equipements.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+                downloadFile(apiService.exportEquipements(token), "equipements.xlsx",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
         btnXlsxAutres.setOnClickListener(v ->
-                downloadFile(apiService.exportAutres(token), "autres.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+                downloadFile(apiService.exportAutres(token), "autres.xlsx",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
         btnXlsxEtat.setOnClickListener(v ->
-                downloadFile(apiService.exportEtat(token), "etat.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+                downloadFile(apiService.exportEtat(token), "etat.xlsx",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
         btnPdfEquip.setOnClickListener(v ->
                 downloadFile(extApiService.exportPdfEquipements(token), "equipements.pdf", "application/pdf"));
         btnPdfAutres.setOnClickListener(v ->
@@ -105,9 +108,9 @@ public class ExportActivity extends AppCompatActivity {
                         is.close();
 
                         new androidx.appcompat.app.AlertDialog.Builder(ExportActivity.this)
-                                .setTitle("✅ Export réussi")
-                                .setMessage("Fichier sauvegardé :\n" + file.getName())
-                                .setPositiveButton("📤 Partager", (d, w) -> shareFile(file, mimeType))
+                                .setTitle("Export réussi")
+                                .setMessage("Fichier sauvegardé : " + file.getName())
+                                .setPositiveButton("Partager", (d, w) -> shareFile(file, mimeType))
                                 .setNegativeButton("Fermer", null)
                                 .show();
                     } catch (Exception e) {
@@ -117,112 +120,16 @@ public class ExportActivity extends AppCompatActivity {
                     }
                 } else {
                     Toast.makeText(ExportActivity.this,
-                            "Erreur d'export (code " + response.code() + ")",
+                            "Erreur export (code " + response.code() + ")",
                             Toast.LENGTH_SHORT).show();
                 }
             }
+
             @Override
             public void onFailure(Call<ResponseBody> c, Throwable t) {
                 Toast.makeText(ExportActivity.this,
-                        "Erreur de connexion : " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                        "Erreur de connexion", Toast.LENGTH_SHORT).show();
             }
         });
     }
 }
-
-
-public class ExportActivity extends AppCompatActivity {
-
-    private SessionManager sessionManager;
-    private ApiService apiService;
-    private ExtendedApiService extApiService;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_export);
-
-        sessionManager = new SessionManager(this);
-        apiService = ApiClient.getApiService();
-        extApiService = ApiClient.getClient().create(ExtendedApiService.class);
-
-        MaterialButton btnBack = findViewById(R.id.btnBack);
-        btnBack.setOnClickListener(v -> finish());
-
-        Button btnXlsxEquip = findViewById(R.id.btnXlsxEquip);
-        Button btnXlsxAutres = findViewById(R.id.btnXlsxAutres);
-        Button btnXlsxEtat = findViewById(R.id.btnXlsxEtat);
-        Button btnPdfEquip = findViewById(R.id.btnPdfEquip);
-        Button btnPdfAutres = findViewById(R.id.btnPdfAutres);
-        Button btnPdfGlobal = findViewById(R.id.btnPdfGlobal);
-
-        String token = "Bearer " + sessionManager.getToken();
-
-        btnXlsxEquip.setOnClickListener(v ->
-                downloadFile(apiService.exportEquipements(token), "equipements.xlsx"));
-        btnXlsxAutres.setOnClickListener(v ->
-                downloadFile(apiService.exportAutres(token), "autres.xlsx"));
-        btnXlsxEtat.setOnClickListener(v ->
-                downloadFile(apiService.exportEtat(token), "etat.xlsx"));
-        btnPdfEquip.setOnClickListener(v ->
-                downloadFile(extApiService.exportPdfEquipements(token), "equipements.pdf"));
-        btnPdfAutres.setOnClickListener(v ->
-                downloadFile(extApiService.exportPdfAutres(token), "autres.pdf"));
-        btnPdfGlobal.setOnClickListener(v ->
-                downloadFile(extApiService.exportPdfGlobal(token), "rapport_global.pdf"));
-    }
-
-    private File getDownloadDir() {
-        // API 29+ : app-scoped external storage, no permission needed
-        // API < 29 : public Downloads (requires WRITE_EXTERNAL_STORAGE already declared)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-            if (dir != null) { dir.mkdirs(); return dir; }
-        }
-        File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        if (dir != null) dir.mkdirs();
-        return dir;
-    }
-
-    private void downloadFile(Call<ResponseBody> call, String filename) {
-        call.enqueue(new Callback<ResponseBody>() {
-            @Override
-            public void onResponse(Call<ResponseBody> c, Response<ResponseBody> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    try {
-                        File dir = getDownloadDir();
-                        if (dir == null) {
-                            Toast.makeText(ExportActivity.this,
-                                    "Impossible d'accéder au stockage", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                        File file = new File(dir, filename);
-                        InputStream is = response.body().byteStream();
-                        FileOutputStream fos = new FileOutputStream(file);
-                        byte[] buf = new byte[8192]; int len;
-                        while ((len = is.read(buf)) != -1) fos.write(buf, 0, len);
-                        fos.close();
-                        is.close();
-                        Toast.makeText(ExportActivity.this,
-                                "✅ Fichier sauvegardé :\n" + file.getAbsolutePath(),
-                                Toast.LENGTH_LONG).show();
-                    } catch (Exception e) {
-                        Toast.makeText(ExportActivity.this,
-                                "Erreur de sauvegarde : " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(ExportActivity.this,
-                            "Erreur d'export (code " + response.code() + ")",
-                            Toast.LENGTH_SHORT).show();
-                }
-            }
-            @Override
-            public void onFailure(Call<ResponseBody> c, Throwable t) {
-                Toast.makeText(ExportActivity.this,
-                        "Erreur de connexion : " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-}
-
