@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Génère la présentation de soutenance de stage à partir des images réelles
-extraites du rapport (logos, diagrammes UML, architectures, captures d'écran).
-
-Pré-requis : pip install python-pptx pillow
-Lancer     : python generate_ppt.py
+Présentation de soutenance — InventaireCFC
+python generate_ppt.py
 """
 
-import os
+import os, math
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
@@ -15,14 +12,15 @@ from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
 from PIL import Image
 
-# ---------------------------------------------------------------- couleurs
+# ── couleurs ─────────────────────────────────────────────────────────────────
 DARK   = RGBColor(0x1B, 0x34, 0x4A)
 TEAL   = RGBColor(0x26, 0x6F, 0x8E)
 GREEN  = RGBColor(0x5A, 0x7D, 0x2B)
 LIGHT  = RGBColor(0xF3, 0xF6, 0xF8)
 WHITE  = RGBColor(0xFF, 0xFF, 0xFF)
-GREY   = RGBColor(0x55, 0x66, 0x70)
-PURPLE = RGBColor(0x6A, 0x3D, 0x9A)
+GREY   = RGBColor(0x77, 0x88, 0x90)
+SMOKE  = RGBColor(0xE8, 0xED, 0xF0)
+BLACK  = RGBColor(0x00, 0x00, 0x00)
 
 ASSETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ppt_assets")
 
@@ -30,422 +28,538 @@ prs = Presentation()
 prs.slide_width  = Inches(13.333)
 prs.slide_height = Inches(7.5)
 SW, SH = prs.slide_width, prs.slide_height
-BLANK = prs.slide_layouts[6]
+BLANK  = prs.slide_layouts[6]
 
-
-# ---------------------------------------------------------------- helpers
-def slide():
-    return prs.slides.add_slide(BLANK)
-
+# ── utilitaires ──────────────────────────────────────────────────────────────
+def slide(): return prs.slides.add_slide(BLANK)
 
 def bg(s, color):
     s.background.fill.solid()
     s.background.fill.fore_color.rgb = color
 
-
-def rect(s, x, y, w, h, color):
-    shp = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, x, y, w, h)
-    shp.fill.solid()
-    shp.fill.fore_color.rgb = color
-    shp.line.fill.background()
+def box(s, x, y, w, h, fill, line_color=None, line_w=None, radius=False):
+    shape_type = MSO_SHAPE.ROUNDED_RECTANGLE if radius else MSO_SHAPE.RECTANGLE
+    shp = s.shapes.add_shape(shape_type, x, y, w, h)
+    if radius:
+        shp.adjustments[0] = 0.05
+    shp.fill.solid(); shp.fill.fore_color.rgb = fill
+    if line_color:
+        shp.line.color.rgb = line_color
+        if line_w: shp.line.width = line_w
+    else:
+        shp.line.fill.background()
     shp.shadow.inherit = False
     return shp
-
 
 def txt(s, x, y, w, h, text, size=18, color=DARK, bold=False,
         align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP, italic=False):
     tb = s.shapes.add_textbox(x, y, w, h)
-    tf = tb.text_frame
-    tf.word_wrap = True
-    tf.vertical_anchor = anchor
+    tf = tb.text_frame; tf.word_wrap = True; tf.vertical_anchor = anchor
     for i, ln in enumerate(text.split("\n")):
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
         p.alignment = align
-        r = p.add_run()
-        r.text = ln
-        r.font.size = Pt(size)
-        r.font.bold = bold
-        r.font.italic = italic
-        r.font.color.rgb = color
+        r = p.add_run(); r.text = ln
+        r.font.size = Pt(size); r.font.bold = bold
+        r.font.italic = italic; r.font.color.rgb = color
         r.font.name = "Calibri"
     return tb
 
-
-def bullets(s, x, y, w, h, items, size=16, color=DARK, gap=6):
+def blist(s, x, y, w, h, items, size=16, color=DARK, gap=6, bullet="•"):
     tb = s.shapes.add_textbox(x, y, w, h)
-    tf = tb.text_frame
-    tf.word_wrap = True
+    tf = tb.text_frame; tf.word_wrap = True
     for i, it in enumerate(items):
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
         p.space_after = Pt(gap)
-        r = p.add_run()
-        r.text = "•  " + it
-        r.font.size = Pt(size)
-        r.font.color.rgb = color
-        r.font.name = "Calibri"
-    return tb
-
+        r = p.add_run(); r.text = f"{bullet}  {it}"
+        r.font.size = Pt(size); r.font.color.rgb = color; r.font.name = "Calibri"
 
 def A(stem):
     for f in sorted(os.listdir(ASSETS)):
-        if f.startswith(stem + "_"):
-            return os.path.join(ASSETS, f)
-    return os.path.join(ASSETS, stem + ".png")
+        if f.startswith(stem + "_"): return os.path.join(ASSETS, f)
+    return ""
 
-
-def img_fit(s, path, x, y, w, h, align="center", valign="middle"):
-    if not os.path.exists(path):
-        rect(s, x, y, w, h, LIGHT)
-        return
+def img_fit(s, path, x, y, w, h, valign="middle"):
+    if not path or not os.path.exists(path):
+        box(s, x, y, w, h, LIGHT); return
     iw, ih = Image.open(path).size
-    if (w / h) < (iw / ih):
-        nw, nh = w, int(w * ih / iw)
-    else:
-        nh, nw = h, int(h * iw / ih)
-    nx = x + (w - nw) // 2 if align == "center" else (x if align == "left" else x + w - nw)
+    ratio = min(w / iw, h / ih)
+    nw, nh = int(iw * ratio), int(ih * ratio)
+    nx = x + (w - nw) // 2
     ny = y + (h - nh) // 2 if valign == "middle" else (y if valign == "top" else y + h - nh)
     s.shapes.add_picture(path, nx, ny, nw, nh)
 
-
 def header(s, title, num=None):
     bg(s, WHITE)
-    rect(s, 0, 0, SW, Inches(1.05), TEAL)
-    rect(s, 0, Inches(1.05), SW, Inches(0.06), GREEN)
-    txt(s, Inches(0.55), 0, Inches(10.8), Inches(1.05), title,
-        25, WHITE, bold=True, anchor=MSO_ANCHOR.MIDDLE)
+    box(s, 0, 0, SW, Inches(1.05), TEAL)
+    box(s, 0, Inches(1.05), SW, Inches(0.07), GREEN)
+    txt(s, Inches(0.5), 0, Inches(10.8), Inches(1.05), title,
+        24, WHITE, bold=True, anchor=MSO_ANCHOR.MIDDLE)
     img_fit(s, A("p01_3"), Inches(11.7), Inches(0.18), Inches(1.35), Inches(0.7))
-    if num is not None:
-        txt(s, Inches(12.4), Inches(7.02), Inches(0.8), Inches(0.4),
+    if num:
+        txt(s, Inches(12.4), Inches(7.05), Inches(0.8), Inches(0.35),
             str(num), 11, GREY, align=PP_ALIGN.RIGHT)
 
+def iphone_frame(s, cx, cy, phone_w, phone_h):
+    """Dessine un cadre iPhone centré en (cx,cy) de taille phone_w x phone_h."""
+    r  = Emu(phone_w * 0.12)   # rayon arrondi
+    bw = Emu(phone_w * 0.05)   # épaisseur bordure
+    # corps
+    body = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE,
+                               cx - phone_w//2, cy - phone_h//2, phone_w, phone_h)
+    body.adjustments[0] = 0.12
+    body.fill.solid(); body.fill.fore_color.rgb = RGBColor(0x1C,0x1C,0x1E)
+    body.line.color.rgb = RGBColor(0x3A,0x3A,0x3C); body.line.width = Emu(18000)
+    body.shadow.inherit = False
+    # écran
+    pad_x = Emu(phone_w * 0.07)
+    pad_top = Emu(phone_h * 0.10)
+    pad_bot = Emu(phone_h * 0.10)
+    sx = cx - phone_w//2 + pad_x
+    sy = cy - phone_h//2 + pad_top
+    sw = phone_w - pad_x*2
+    sh = phone_h - pad_top - pad_bot
+    scr = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, sx, sy, sw, sh)
+    scr.fill.solid(); scr.fill.fore_color.rgb = RGBColor(0xE0,0xE8,0xEE)
+    scr.line.fill.background(); scr.shadow.inherit = False
+    # notch
+    nw, nh = Emu(phone_w*0.3), Emu(phone_h*0.035)
+    notch = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE,
+                                cx - nw//2, cy - phone_h//2 + Emu(phone_h*0.005), nw, nh)
+    notch.adjustments[0] = 0.5
+    notch.fill.solid(); notch.fill.fore_color.rgb = RGBColor(0x1C,0x1C,0x1E)
+    notch.line.fill.background(); notch.shadow.inherit = False
+    # home bar
+    hbw, hbh = Emu(phone_w*0.28), Emu(phone_h*0.012)
+    hbar = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE,
+                               cx - hbw//2, cy + phone_h//2 - Emu(phone_h*0.06), hbw, hbh)
+    hbar.adjustments[0] = 0.5
+    hbar.fill.solid(); hbar.fill.fore_color.rgb = RGBColor(0x88,0x88,0x88)
+    hbar.line.fill.background(); hbar.shadow.inherit = False
+    return sx, sy, sw, sh   # zone écran
 
-# ================================================================ 1 — COUVERTURE
+# ═════════════════════════════════════════════════════════════════════════════
+# 1 — COUVERTURE
+# ═════════════════════════════════════════════════════════════════════════════
 s = slide()
 bg(s, WHITE)
-rect(s, 0, 0, Inches(0.35), SH, TEAL)
-rect(s, Inches(0.35), 0, Inches(0.08), SH, GREEN)
-img_fit(s, A("p01_0"), Inches(1.3),  Inches(0.30), Inches(1.5), Inches(1.5))
-img_fit(s, A("p01_1"), Inches(5.9),  Inches(0.40), Inches(1.5), Inches(1.4))
-img_fit(s, A("p01_2"), Inches(9.7),  Inches(0.55), Inches(2.6), Inches(1.1))
-txt(s, Inches(1.0), Inches(2.05), Inches(11.5), Inches(0.5),
-    "RAPPORT DE STAGE — SOUTENANCE", 15, TEAL, bold=True, align=PP_ALIGN.CENTER)
-txt(s, Inches(1.0), Inches(2.55), Inches(11.5), Inches(1.4),
-    "Conception et Développement d'une Application Android\n"
-    "Intelligente pour la Gestion de l'Inventaire Physique",
-    29, DARK, bold=True, align=PP_ALIGN.CENTER)
-img_fit(s, A("p01_3"), Inches(5.4), Inches(4.05), Inches(2.5), Inches(0.95))
-txt(s, Inches(1.0), Inches(5.0), Inches(11.5), Inches(0.5),
+box(s, 0, 0, Inches(0.4), SH, TEAL)
+box(s, Inches(0.4), 0, Inches(0.1), SH, GREEN)
+img_fit(s, A("p01_0"), Inches(1.2),  Inches(0.25), Inches(1.55), Inches(1.55))
+img_fit(s, A("p01_1"), Inches(5.85), Inches(0.35), Inches(1.55), Inches(1.45))
+img_fit(s, A("p01_2"), Inches(9.6),  Inches(0.5),  Inches(2.7),  Inches(1.15))
+
+box(s, Inches(1.2), Inches(2.05), Inches(11.2), Inches(0.06), GREEN)
+txt(s, Inches(1.2), Inches(2.2), Inches(11.2), Inches(0.5),
+    "RAPPORT DE STAGE   —   SOUTENANCE", 14, TEAL, bold=True, align=PP_ALIGN.CENTER)
+txt(s, Inches(1.2), Inches(2.85), Inches(11.2), Inches(1.5),
+    "Conception et Développement d'une Application Android\nIntelligente pour la Gestion de l'Inventaire Physique",
+    30, DARK, bold=True, align=PP_ALIGN.CENTER)
+
+img_fit(s, A("p01_3"), Inches(5.55), Inches(4.2), Inches(2.25), Inches(0.95))
+txt(s, Inches(1.0), Inches(5.2), Inches(11.4), Inches(0.5),
     "Audit, Ingénierie en Consulting et Formation — Casablanca",
     15, GREY, align=PP_ALIGN.CENTER, italic=True)
-rect(s, Inches(1.8), Inches(5.7), Inches(9.7), Inches(1.15), LIGHT)
-txt(s, Inches(2.2), Inches(5.82), Inches(5.0), Inches(1.0),
+box(s, Inches(1.8), Inches(5.85), Inches(9.8), Inches(1.2), SMOKE, radius=True)
+txt(s, Inches(2.2), Inches(5.98), Inches(4.8), Inches(0.95),
     "Réalisé par :\nKenza FOUDALI", 15, DARK, bold=True)
-txt(s, Inches(6.9), Inches(5.82), Inches(4.5), Inches(1.0),
+txt(s, Inches(7.1), Inches(5.98), Inches(4.3), Inches(0.95),
     "Encadrante :\nMme Laila MAADIR", 15, DARK, bold=True)
-txt(s, Inches(1.0), Inches(6.95), Inches(11.5), Inches(0.4),
-    "Année Universitaire 2025 / 2026   ·   du 04 mai au 13 juin 2026",
+txt(s, Inches(1.0), Inches(7.08), Inches(11.4), Inches(0.35),
+    "Année Universitaire 2025 / 2026   ·   04 mai – 13 juin 2026",
     12, GREY, align=PP_ALIGN.CENTER)
 
-# ================================================================ 2 — SOMMAIRE
+# ═════════════════════════════════════════════════════════════════════════════
+# 2 — PLAN
+# ═════════════════════════════════════════════════════════════════════════════
 s = slide()
 header(s, "Plan de la présentation", 2)
 plan = [
-    "1.  Présentation de l'entreprise & cadre du stage",
-    "2.  Problématique & objectifs du projet",
-    "3.  Déroulement & planification (Gantt / PERT)",
-    "4.  Conception & modélisation UML",
-    "5.  Architecture du système",
-    "6.  Technologies utilisées",
-    "7.  Réalisation & démonstration de l'application",
-    "8.  Bilan, difficultés & perspectives",
+    ("01", "Introduction & Problématique"),
+    ("02", "Présentation de l'organisme"),
+    ("03", "Objectifs du projet"),
+    ("04", "Gestion du projet"),
+    ("05", "Conception UML"),
+    ("06", "Technologies utilisées"),
+    ("07", "Architecture du système"),
+    ("08", "Présentation de la plateforme"),
+    ("09", "Perspectives d'évolution"),
+    ("10", "Conclusion"),
 ]
-rect(s, Inches(1.2), Inches(1.6), Inches(0.12), Inches(5.2), GREEN)
-bullets(s, Inches(1.6), Inches(1.75), Inches(10.5), Inches(5.2), plan, size=20, gap=13)
+col1, col2 = plan[:5], plan[5:]
+for col, ox in [(col1, Inches(1.2)), (col2, Inches(7.2))]:
+    for i, (num, label) in enumerate(col):
+        y = Inches(1.55) + i * Inches(1.0)
+        box(s, ox, y, Inches(0.55), Inches(0.55), TEAL, radius=True)
+        txt(s, ox, y, Inches(0.55), Inches(0.55), num, 18, WHITE, bold=True,
+            align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        txt(s, Emu(ox + Inches(0.7)), Emu(y + Inches(0.1)),
+            Inches(5.3), Inches(0.45), label, 18, DARK, bold=False,
+            anchor=MSO_ANCHOR.MIDDLE)
 
-# ================================================================ 3 — INTRODUCTION
+# ═════════════════════════════════════════════════════════════════════════════
+# 3 — INTRODUCTION & PROBLÉMATIQUE
+# ═════════════════════════════════════════════════════════════════════════════
 s = slide()
-header(s, "Introduction & contexte", 3)
-txt(s, Inches(0.7), Inches(1.35), Inches(11.9), Inches(1.4),
-    "La gestion de l'inventaire physique des immobilisations est une mission "
-    "essentielle du métier d'audit de CF Consult. Réalisée manuellement (saisie "
-    "Excel, pointage papier), elle reste lente, source d'erreurs et difficile à tracer.",
+header(s, "Introduction & Problématique", 3)
+
+# contexte
+txt(s, Inches(0.7), Inches(1.35), Inches(11.9), Inches(0.8),
+    "CF Consult réalise des missions d'inventaire physique pour ses clients. "
+    "Aujourd'hui ce processus est entièrement manuel — fiches papier et fichiers Excel.",
     17, DARK)
-rect(s, Inches(0.7), Inches(3.0), Inches(5.8), Inches(3.7), LIGHT)
-txt(s, Inches(1.0), Inches(3.2), Inches(5.3), Inches(0.5), "Problèmes actuels", 18, TEAL, bold=True)
-bullets(s, Inches(1.0), Inches(3.8), Inches(5.3), Inches(2.8), [
-    "Saisie manuelle longue et fastidieuse",
-    "Risque d'erreurs et de doublons",
+
+# 2 colonnes
+box(s, Inches(0.7), Inches(2.4), Inches(5.7), Inches(4.2), SMOKE, radius=True)
+box(s, Inches(6.9), Inches(2.4), Inches(5.7), Inches(4.2), TEAL, radius=True)
+
+txt(s, Inches(1.0), Inches(2.55), Inches(5.1), Inches(0.55),
+    "⚠  Problèmes actuels", 17, RGBColor(0xCC,0x33,0x33), bold=True)
+blist(s, Inches(1.0), Inches(3.2), Inches(5.0), Inches(3.2), [
+    "Saisie lente, sources d'erreurs",
     "Aucun suivi en temps réel",
     "Pas de responsabilisation par agent",
-    "Absence de preuve photo des biens",
-], size=15, gap=11)
-rect(s, Inches(6.8), Inches(3.0), Inches(5.8), Inches(3.7), TEAL)
-txt(s, Inches(7.1), Inches(3.2), Inches(5.3), Inches(0.5), "Solution proposée", 18, WHITE, bold=True)
-bullets(s, Inches(7.1), Inches(3.8), Inches(5.3), Inches(2.8), [
-    "Application mobile Android native",
-    "Scan QR code & code-barres (ZXing)",
-    "Reconnaissance d'objet par IA (Gemini)",
-    "Photo & validation des biens",
-    "Export Excel / PDF & tableau de bord admin",
-], size=15, color=WHITE, gap=11)
+    "Pas de preuve photo des biens",
+    "Rapprochement comptable fastidieux",
+], size=15, gap=12)
 
-# ================================================================ 4 — ENTREPRISE
+txt(s, Inches(7.2), Inches(2.55), Inches(5.1), Inches(0.55),
+    "✓  Solution proposée", 17, WHITE, bold=True)
+blist(s, Inches(7.2), Inches(3.2), Inches(5.0), Inches(3.2), [
+    "Application mobile Android native",
+    "Scan QR code & code-barres",
+    "Reconnaissance d'objet par IA",
+    "Photo & validation des biens",
+    "Export Excel / PDF instantané",
+], size=15, color=WHITE, gap=12)
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 4 — PRÉSENTATION DE L'ORGANISME
+# ═════════════════════════════════════════════════════════════════════════════
 s = slide()
 header(s, "Présentation de CF Consult", 4)
-img_fit(s, A("p01_3"), Inches(0.8), Inches(1.45), Inches(4.0), Inches(1.5))
-rect(s, Inches(0.8), Inches(3.2), Inches(4.2), Inches(0.55), TEAL)
-txt(s, Inches(1.0), Inches(3.2), Inches(4.0), Inches(0.55), "Fiche d'identité", 16, WHITE, bold=True, anchor=MSO_ANCHOR.MIDDLE)
-bullets(s, Inches(0.9), Inches(3.95), Inches(4.3), Inches(2.8), [
-    "Activité : Audit, Ingénierie,",
-    "    Consulting & Formation",
-    "Siège : Casablanca, Maroc",
-    "Mission : inventaire physique",
-    "    des immobilisations",
-], size=14, gap=9)
-img_fit(s, A("p17_1"), Inches(5.4), Inches(1.55), Inches(7.2), Inches(2.4))
-img_fit(s, A("p18_1"), Inches(6.95), Inches(4.05), Inches(2.9), Inches(2.9))
+img_fit(s, A("p01_3"), Inches(0.7), Inches(1.4), Inches(3.8), Inches(1.45))
+box(s, Inches(0.7), Inches(3.05), Inches(3.8), Inches(3.7), SMOKE, radius=True)
+blist(s, Inches(0.9), Inches(3.2), Inches(3.5), Inches(3.4), [
+    "Audit & commissariat aux comptes",
+    "Expertise comptable",
+    "Conseil & ingénierie",
+    "Digitalisation des SI",
+    "Gestion des immobilisations",
+    "Formation & recrutement",
+], size=14, gap=11)
+img_fit(s, A("p17_1"), Inches(5.0), Inches(1.35), Inches(7.8), Inches(2.5))
+img_fit(s, A("p18_1"), Inches(5.2), Inches(3.9),  Inches(7.4), Inches(3.35))
 
-# ================================================================ 5 — METIER
+# ═════════════════════════════════════════════════════════════════════════════
+# 5 — OBJECTIFS (+ prompt Napkin)
+# ═════════════════════════════════════════════════════════════════════════════
 s = slide()
-header(s, "Le métier de l'inventaire physique", 5)
-txt(s, Inches(0.7), Inches(1.35), Inches(11.9), Inches(1.0),
-    "Recenser, identifier et qualifier l'ensemble des biens d'une organisation, "
-    "puis rapprocher le terrain des données comptables.", 17, DARK)
-steps = [("1", "Préparer", "Import du fichier\ncomptable (Excel)"),
-         ("2", "Recenser", "Scan QR / code-barres\nsur le terrain"),
-         ("3", "Qualifier", "État, photo &\nvalidation agent"),
-         ("4", "Restituer", "Rapports Excel / PDF\n& écarts")]
-x = Inches(0.7)
-for n, t, d in steps:
-    rect(s, x, Inches(2.9), Inches(2.85), Inches(2.6), LIGHT)
-    rect(s, x, Inches(2.9), Inches(2.85), Inches(0.7), TEAL)
-    txt(s, x, Inches(2.9), Inches(2.85), Inches(0.7), "Étape " + n, 15, WHITE, bold=True, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
-    txt(s, x, Inches(3.72), Inches(2.85), Inches(0.5), t, 18, DARK, bold=True, align=PP_ALIGN.CENTER)
-    txt(s, Emu(x + Inches(0.2)), Inches(4.3), Inches(2.45), Inches(1.1), d, 13, GREY, align=PP_ALIGN.CENTER)
-    x = Emu(x + Inches(3.05))
-txt(s, Inches(0.7), Inches(5.85), Inches(11.9), Inches(0.9),
-    "Objectif : remplacer un processus manuel lent et faillible par un outil "
-    "mobile rapide, fiable, traçable et intelligent.", 16, TEAL, bold=True, align=PP_ALIGN.CENTER)
+header(s, "Objectifs du projet", 5)
 
-# ================================================================ 6 — OBJECTIFS
-s = slide()
-header(s, "Objectifs du projet", 6)
-rect(s, Inches(0.7), Inches(1.6), Inches(5.85), Inches(4.9), LIGHT)
-rect(s, Inches(6.75), Inches(1.6), Inches(5.85), Inches(4.9), LIGHT)
-txt(s, Inches(0.7), Inches(1.7), Inches(5.85), Inches(0.5), "Objectifs fonctionnels", 18, TEAL, bold=True, align=PP_ALIGN.CENTER)
-txt(s, Inches(6.75), Inches(1.7), Inches(5.85), Inches(0.5), "Objectifs avancés", 18, GREEN, bold=True, align=PP_ALIGN.CENTER)
-bullets(s, Inches(1.0), Inches(2.45), Inches(5.3), Inches(4.0), [
-    "Authentifier agents & admin (JWT)",
-    "Importer les données comptables",
-    "Scanner QR codes et codes-barres",
-    "Saisir / modifier l'inventaire avec photo",
-], size=16, gap=17)
-bullets(s, Inches(7.05), Inches(2.45), Inches(5.3), Inches(4.0), [
-    "Identifier un bien inconnu par IA",
-    "Suivre l'activité des agents",
-    "Exporter les rapports Excel & PDF",
-    "Tableau de bord administrateur",
-], size=16, gap=17)
-
-# ================================================================ 7 — PLANNING
-s = slide()
-header(s, "Déroulement du stage — 6 semaines", 7)
-img_fit(s, A("p21_1"), Inches(0.6), Inches(1.4), Inches(12.1), Inches(5.7))
-
-# ================================================================ 8 — GANTT
-s = slide()
-header(s, "Planification — Diagramme de Gantt", 8)
-img_fit(s, A("p28_0"), Inches(0.4), Inches(1.4), Inches(12.5), Inches(5.7))
-
-# ================================================================ 9 — PERT
-s = slide()
-header(s, "Planification — Diagramme de PERT", 9)
-img_fit(s, A("p29_0"), Inches(0.5), Inches(1.4), Inches(12.3), Inches(5.7))
-
-# ================================================================ 10 — CAS D'UTILISATION
-s = slide()
-header(s, "Conception — Acteurs & cas d'utilisation", 10)
-img_fit(s, A("p33_0"), Inches(3.7), Inches(1.25), Inches(5.9), Inches(6.0))
-txt(s, Inches(0.5), Inches(1.5), Inches(3.0), Inches(0.5), "Acteurs", 18, TEAL, bold=True)
-bullets(s, Inches(0.5), Inches(2.1), Inches(3.0), Inches(2.8),
-        ["Agent : scan, saisie, photo, validation, export",
-         "Administrateur : import, gestion des agents, suivi"], size=14, gap=14)
-txt(s, Inches(9.8), Inches(1.5), Inches(3.3), Inches(0.5), "Inclusions", 16, GREEN, bold=True)
-bullets(s, Inches(9.8), Inches(2.1), Inches(3.3), Inches(2.8),
-        ["Scan → modifier un article",
-         "Photo → identifier via IA Gemini"], size=14, gap=14)
-
-# ================================================================ 11 — CLASSES
-s = slide()
-header(s, "Conception — Diagramme de classes", 11)
-img_fit(s, A("p35_0"), Inches(3.4), Inches(1.3), Inches(6.6), Inches(5.9))
-bullets(s, Inches(0.5), Inches(1.8), Inches(2.7), Inches(5.0),
-        ["Agent", "Localisation", "InventEquipement", "InventAutres",
-         "Etat", "Station", "Activité"], size=15, gap=17)
-
-# ================================================================ 12 — ARCHITECTURE COMPLETE
-s = slide()
-header(s, "Architecture complète du système", 12)
-img_fit(s, A("p24_1"), Inches(0.6), Inches(1.35), Inches(12.1), Inches(5.9))
-
-# ================================================================ 13 — ARCHITECTURE 3 TIERS
-s = slide()
-header(s, "Architecture trois tiers", 13)
-img_fit(s, A("p30_0"), Inches(2.4), Inches(1.3), Inches(8.5), Inches(5.9))
-
-# ================================================================ 14 — ARCHITECTURE COUCHES
-s = slide()
-header(s, "Architecture en couches du backend", 14)
-img_fit(s, A("p31_0"), Inches(3.6), Inches(1.3), Inches(6.3), Inches(5.9))
-bullets(s, Inches(0.5), Inches(1.9), Inches(2.9), Inches(5.0),
-        ["Controller (REST)", "Service (métier)", "Repository (JPA)",
-         "Modèle (entités)", "Spring Security + JWT"], size=15, gap=19)
-
-# ================================================================ 15 — TECHNOLOGIES
-s = slide()
-header(s, "Technologies utilisées", 15)
-cols = [
-    ("Backend", GREEN, ["Java 17", "Spring Boot (API REST)", "Spring Data JPA",
-                        "Spring Security + JWT", "Maven"]),
-    ("Base de données", TEAL, ["PostgreSQL", "Modèle relationnel", "JDBC", "openpyxl (Excel)"]),
-    ("Mobile Android", DARK, ["Java natif", "Retrofit (HTTP)", "ZXing (scan)",
-                             "Material Design 3", "FileProvider"]),
-    ("IA & Outils", PURPLE, ["Google Gemini 2.5 Flash", "Reconnaissance d'objets",
-                            "Git & GitHub", "Postman"]),
+goals = [
+    ("🔐", "Authentification",  "Login JWT\nAgent & Admin"),
+    ("📥", "Import données",    "Fichier Excel\ncomptable"),
+    ("📷", "Scan & Photo",      "QR code,\ncode-barres"),
+    ("🤖", "IA Gemini",         "Reconnaissance\nd'objets"),
+    ("📊", "Dashboard",         "Tableau de bord\nadmin"),
+    ("📤", "Export",            "Excel & PDF\ninstantané"),
 ]
-x = Inches(0.55)
-w = Inches(3.0)
-for tc, color, items in cols:
-    rect(s, x, Inches(1.55), w, Inches(5.3), LIGHT)
-    rect(s, x, Inches(1.55), w, Inches(0.75), color)
-    txt(s, x, Inches(1.55), w, Inches(0.75), tc, 15, WHITE, bold=True,
+w, gap = Inches(1.95), Inches(0.2)
+total = w*6 + gap*5
+x0 = Emu((SW - total) // 2)
+for i, (icon, title, desc) in enumerate(goals):
+    x = Emu(x0 + i*(w + gap))
+    box(s, x, Inches(1.55), w, Inches(4.9),
+        TEAL if i % 2 == 0 else SMOKE, radius=True)
+    txt(s, x, Inches(1.7), w, Inches(0.9), icon, 34,
+        WHITE if i%2==0 else TEAL, align=PP_ALIGN.CENTER)
+    txt(s, x, Inches(2.7), w, Inches(0.55), title, 15,
+        WHITE if i%2==0 else DARK, bold=True, align=PP_ALIGN.CENTER)
+    txt(s, x, Inches(3.35), w, Inches(0.9), desc, 13,
+        RGBColor(0xD0,0xE8,0xF0) if i%2==0 else GREY,
+        align=PP_ALIGN.CENTER)
+
+# Prompt Napkin
+box(s, Inches(0.7), Inches(6.55), Inches(11.9), Inches(0.7),
+    RGBColor(0xFF,0xF8,0xE1), radius=True)
+txt(s, Inches(0.95), Inches(6.58), Inches(11.5), Inches(0.6),
+    "💡 Napkin : 6 feature icons connected to a mobile phone — "
+    "Login, QR Scan, AI recognition, Photo, Dashboard, Export — clean flat style",
+    13, RGBColor(0x99,0x77,0x00), italic=True)
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 6 — GANTT
+# ═════════════════════════════════════════════════════════════════════════════
+s = slide()
+header(s, "Gestion du projet — Diagramme de Gantt", 6)
+img_fit(s, A("p28_0"), Inches(0.4), Inches(1.3), Inches(12.5), Inches(5.9))
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 7 — UML : CAS D'UTILISATION
+# ═════════════════════════════════════════════════════════════════════════════
+s = slide()
+header(s, "Conception UML — Cas d'utilisation", 7)
+img_fit(s, A("p33_0"), Inches(4.1), Inches(1.2), Inches(5.4), Inches(6.1))
+box(s, Inches(0.5), Inches(1.5), Inches(3.4), Inches(5.6), SMOKE, radius=True)
+txt(s, Inches(0.7), Inches(1.65), Inches(3.1), Inches(0.5), "Acteurs", 17, TEAL, bold=True)
+blist(s, Inches(0.7), Inches(2.3), Inches(3.0), Inches(2.4), [
+    "Agent d'inventaire",
+    "Administrateur",
+], size=15, gap=14)
+txt(s, Inches(0.7), Inches(4.0), Inches(3.1), Inches(0.5), "Cas principaux", 17, TEAL, bold=True)
+blist(s, Inches(0.7), Inches(4.6), Inches(3.0), Inches(2.3), [
+    "Se connecter",
+    "Scanner QR / CAB",
+    "Saisir & valider un bien",
+    "Photographier & IA",
+    "Exporter les rapports",
+    "Gérer les agents",
+], size=14, gap=10)
+# Accolade décorative
+box(s, Inches(3.95), Inches(1.5), Inches(0.05), Inches(5.6), TEAL)
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 8 — UML : CLASSES
+# ═════════════════════════════════════════════════════════════════════════════
+s = slide()
+header(s, "Conception UML — Diagramme de classes", 8)
+img_fit(s, A("p35_0"), Inches(1.8), Inches(1.25), Inches(9.7), Inches(6.0))
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 9 — TECHNOLOGIES (logos uniquement)
+# ═════════════════════════════════════════════════════════════════════════════
+s = slide()
+header(s, "Technologies utilisées", 9)
+
+# Catégories + logos
+cats = [
+    ("Backend", TEAL,  ["p49_0", "p49_1", "p50_0", "p50_1"]),
+    ("Base de données", GREEN, ["p53_0"]),
+    ("Mobile", DARK, ["p54_0", "p55_0", "p56_1"]),
+    ("IA & Outils", RGBColor(0x6A,0x3D,0x9A), ["p52_0", "p53_1", "p54_1"]),
+]
+
+col_w = Inches(3.1)
+cx = Inches(0.5)
+for cat, color, logos in cats:
+    box(s, cx, Inches(1.35), col_w, Inches(0.5), color, radius=True)
+    txt(s, cx, Inches(1.35), col_w, Inches(0.5), cat, 15, WHITE, bold=True,
         align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
-    bullets(s, Emu(x + Inches(0.18)), Inches(2.5), Emu(w - Inches(0.3)), Inches(4.2),
-            items, size=14, gap=13)
-    x = Emu(x + Inches(3.12))
+    # logos dans une grille 2x2
+    logo_h = Inches(2.5) if len(logos) <= 2 else Inches(1.3)
+    lx = cx
+    for j, stem in enumerate(logos):
+        col = j % 2
+        row = j // 2
+        lx2 = cx + col * Inches(1.5)
+        ly2 = Inches(2.0) + row * Inches(2.55)
+        img_fit(s, A(stem), lx2, ly2, Inches(1.45), Inches(1.4))
+    cx = Emu(cx + col_w + Inches(0.18))
 
-# ================================================================ 16 — SEQ AUTH
+# ═════════════════════════════════════════════════════════════════════════════
+# 10 — ARCHITECTURE (générée proprement)
+# ═════════════════════════════════════════════════════════════════════════════
 s = slide()
-header(s, "Fonctionnement — Authentification JWT", 16)
-img_fit(s, A("p36_0"), Inches(3.3), Inches(1.3), Inches(6.7), Inches(5.9))
+header(s, "Architecture du système", 10)
+bg(s, WHITE)
+box(s, 0, 0, SW, Inches(1.05), TEAL)
+box(s, 0, Inches(1.05), SW, Inches(0.07), GREEN)
+txt(s, Inches(0.5), 0, Inches(10.8), Inches(1.05), "Architecture du système",
+    24, WHITE, bold=True, anchor=MSO_ANCHOR.MIDDLE)
+img_fit(s, A("p01_3"), Inches(11.7), Inches(0.18), Inches(1.35), Inches(0.7))
 
-# ================================================================ 17 — SEQ SCAN
-s = slide()
-header(s, "Fonctionnement — Scan QR & code-barres", 17)
-img_fit(s, A("p37_0"), Inches(2.8), Inches(1.25), Inches(7.7), Inches(6.0))
+# Couche présentation (gauche)
+box(s, Inches(0.5), Inches(1.4), Inches(3.2), Inches(5.6), RGBColor(0xE3,0xF2,0xFD), radius=True)
+txt(s, Inches(0.5), Inches(1.5), Inches(3.2), Inches(0.5),
+    "📱  Application Android", 14, DARK, bold=True, align=PP_ALIGN.CENTER)
+blist(s, Inches(0.7), Inches(2.15), Inches(2.8), Inches(3.5), [
+    "Java natif",
+    "Login JWT",
+    "Scan QR / CAB",
+    "Photo + IA Gemini",
+    "Recherche & validation",
+    "Export Excel / PDF",
+], size=13, gap=10, color=DARK)
+txt(s, Inches(0.5), Inches(6.6), Inches(3.2), Inches(0.35),
+    "Couche présentation", 12, TEAL, bold=True, align=PP_ALIGN.CENTER)
 
-# ================================================================ 18 — SEQ IA
-s = slide()
-header(s, "Fonctionnement — Reconnaissance IA (Gemini)", 18)
-img_fit(s, A("p39_0"), Inches(3.4), Inches(1.3), Inches(6.5), Inches(5.9))
+# flèche HTTP REST
+for y_offset in [Inches(2.8), Inches(3.8)]:
+    shp = s.shapes.add_connector(1, Inches(3.7), y_offset, Inches(4.9), y_offset)
+    shp.line.color.rgb = TEAL; shp.line.width = Emu(20000)
+arrow_labels = ["HTTP REST / JSON ▶", "◀ JSON Response"]
+for i, (lbl, y_off) in enumerate(zip(arrow_labels, [Inches(2.5), Inches(3.5)])):
+    txt(s, Inches(3.7), y_off, Inches(1.25), Inches(0.35),
+        lbl, 10, TEAL, italic=True, align=PP_ALIGN.CENTER)
+
+# Couche métier (centre)
+box(s, Inches(4.9), Inches(1.4), Inches(3.6), Inches(5.6), TEAL, radius=True)
+txt(s, Inches(4.9), Inches(1.55), Inches(3.6), Inches(0.5),
+    "⚙  Backend Spring Boot", 14, WHITE, bold=True, align=PP_ALIGN.CENTER)
+blist(s, Inches(5.1), Inches(2.2), Inches(3.2), Inches(3.5), [
+    "API REST / JSON",
+    "Spring Security + JWT",
+    "Controller → Service",
+    "Repository (JPA)",
+    "Import / Export Excel",
+    "Génération QR Code",
+    "Proxy API Gemini",
+], size=13, gap=9, color=WHITE, bullet="›")
+txt(s, Inches(4.9), Inches(6.6), Inches(3.6), Inches(0.35),
+    "Couche métier", 12, WHITE, bold=True, align=PP_ALIGN.CENTER)
+
+# flèche JDBC
+for y_offset in [Inches(2.8), Inches(3.8)]:
+    shp2 = s.shapes.add_connector(1, Inches(8.5), y_offset, Inches(9.6), y_offset)
+    shp2.line.color.rgb = GREEN; shp2.line.width = Emu(20000)
+for lbl2, y_off2 in zip(["JDBC / JPA ▶", "◀ Data"], [Inches(2.5), Inches(3.5)]):
+    txt(s, Inches(8.5), y_off2, Inches(1.1), Inches(0.35),
+        lbl2, 10, GREEN, italic=True, align=PP_ALIGN.CENTER)
+
+# Couche données (droite)
+box(s, Inches(9.6), Inches(1.4), Inches(3.2), Inches(5.6), RGBColor(0xE8,0xF5,0xE9), radius=True)
+txt(s, Inches(9.6), Inches(1.55), Inches(3.2), Inches(0.5),
+    "🗄  PostgreSQL", 14, DARK, bold=True, align=PP_ALIGN.CENTER)
+blist(s, Inches(9.8), Inches(2.2), Inches(2.8), Inches(3.5), [
+    "InventEquipement",
+    "InventAutres",
+    "Localisation",
+    "Agent",
+    "Etat",
+    "Activite (logs)",
+], size=13, gap=10, color=DARK)
+txt(s, Inches(9.6), Inches(6.6), Inches(3.2), Inches(0.35),
+    "Couche données", 12, GREEN, bold=True, align=PP_ALIGN.CENTER)
+
+# Gemini en haut
+box(s, Inches(5.5), Inches(1.42), Inches(2.3), Inches(0.55),
+    RGBColor(0xED,0xE7,0xF6), radius=True)
+txt(s, Inches(5.5), Inches(1.42), Inches(2.3), Inches(0.55),
+    "🤖 Google Gemini AI", 12, RGBColor(0x6A,0x3D,0x9A), bold=True,
+    align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
 
 
-# ---------------------------------------------------------------- réalisation
-def screen_slide(title, num, shots):
+# ═════════════════════════════════════════════════════════════════════════════
+# 11, 12, 13 — PRÉSENTATION PLATEFORME (cadres iPhone)
+# ═════════════════════════════════════════════════════════════════════════════
+phone_w = Inches(3.0)
+phone_h = Inches(5.8)
+cy_phone = Inches(4.35)
+
+for slide_num, (title, subtitle, color, img_stem, bullets_list) in enumerate([
+    ("Interface Administrateur", "Gestion des agents · Import · Tableau de bord",
+     TEAL, "p70_1", ["Import fichier Excel comptable", "Gestion des agents", "Suivi des activités"]),
+    ("Interface Agent", "Login · Inventaire · Scan · Export",
+     GREEN, "p65_1", ["Connexion sécurisée JWT", "Inventaire équipements & autres", "Scan QR / code-barres"]),
+    ("Reconnaissance par IA", "Photo → Gemini → Identification automatique",
+     RGBColor(0x6A,0x3D,0x9A), "p68_1", ["Photo via caméra ou galerie", "Analyse Gemini 2.5 Flash", "Champs pré-remplis automatiquement"]),
+], 11):
     s = slide()
-    header(s, title, num)
-    n = len(shots)
-    total = Inches(2.7) * n + Inches(0.7) * (n - 1)
-    x = Emu((SW - total) // 2)
-    for path, cap in shots:
-        img_fit(s, path, x, Inches(1.4), Inches(2.7), Inches(4.9), valign="top")
-        txt(s, x, Inches(6.35), Inches(2.7), Inches(0.6), cap, 14, TEAL, bold=True, align=PP_ALIGN.CENTER)
-        x = Emu(x + Inches(2.7) + Inches(0.7))
+    header(s, title, slide_num)
+    txt(s, Inches(0.5), Inches(1.2), Inches(12.3), Inches(0.4),
+        subtitle, 15, GREY, italic=True, align=PP_ALIGN.CENTER)
+
+    # 3 cadres iPhone côte à côte
+    positions = [Inches(1.2), Inches(5.15), Inches(9.1)]
+    phone_imgs = [img_stem, "p66_1" if slide_num < 13 else "p64_1",
+                  "p69_1" if slide_num < 13 else "p68_1"]
+    labels = ["Vue principale", "Vue liste", "Vue export"] if slide_num == 12 \
+             else (["Dashboard", "Inventaire", "Export"] if slide_num == 11
+                   else ["Photo", "Analyse", "Résultat"])
+
+    for cx_phone, ph_img, lbl in zip(positions, phone_imgs, labels):
+        sx, sy, sw2, sh2 = iphone_frame(s,
+                                         Emu(cx_phone + phone_w//2),
+                                         cy_phone, phone_w, phone_h)
+        img_fit(s, A(ph_img), sx, sy, sw2, sh2, valign="top")
+        txt(s, cx_phone, Inches(7.08), phone_w, Inches(0.35),
+            lbl, 13, color, bold=True, align=PP_ALIGN.CENTER)
+
+    # légende bullets
+    blist(s, Inches(0.3), Inches(6.4), Inches(12.7), Inches(0.9),
+          bullets_list, size=13, color=DARK, gap=0,
+          bullet="·")
 
 
-# ================================================================ 19
-screen_slide("Réalisation — Connexion & tableau de bord", 19, [
-    (A("p64_1"), "Écran de connexion (JWT)"),
-    (A("p65_1"), "Tableau de bord principal"),
-])
-# ================================================================ 20
-screen_slide("Réalisation — Liste & fiche d'un bien", 20, [
-    (A("p66_1"), "Liste & recherche des biens"),
-    (A("p67_1"), "Fiche d'inventaire d'un bien"),
-])
-# ================================================================ 21 — IA
+# ═════════════════════════════════════════════════════════════════════════════
+# 14 — PERSPECTIVES D'ÉVOLUTION
+# ═════════════════════════════════════════════════════════════════════════════
 s = slide()
-header(s, "Réalisation — Reconnaissance par IA", 21)
-img_fit(s, A("p68_1"), Inches(1.2), Inches(1.4), Inches(3.0), Inches(5.6), valign="top")
-txt(s, Inches(4.7), Inches(1.9), Inches(8.0), Inches(0.6),
-    "Identification d'un bien inconnu par photo", 20, TEAL, bold=True)
-bullets(s, Inches(4.7), Inches(2.8), Inches(8.0), Inches(3.6), [
-    "L'agent prend une photo du bien (caméra ou galerie)",
-    "L'image est envoyée au backend puis à l'API Gemini 2.5 Flash",
-    "L'IA retourne désignation, type, marque et état estimé",
-    "Les champs de la fiche sont pré-remplis automatiquement",
-    "Gestion des erreurs : 3 tentatives en cas de surcharge",
-], size=16, gap=15)
-# ================================================================ 22
-screen_slide("Réalisation — Export & administration", 22, [
-    (A("p69_1"), "États & export Excel / PDF"),
-    (A("p70_1"), "Tableau de bord administrateur"),
-])
+header(s, "Perspectives d'évolution", 14)
 
-# ================================================================ 23 — BILAN
+persp = [
+    ("📶", "Mode hors-ligne",   "Synchronisation différée\nquand le réseau revient"),
+    ("🏷", "Étiquettes QR",     "Impression d'étiquettes\ndirectement depuis l'app"),
+    ("🌍", "Multi-sites",       "Gestion de plusieurs\nentreprises et sites"),
+    ("📈", "Analytics avancés", "Tableaux de bord\nstatistiques & KPIs"),
+]
+box_w = Inches(2.9)
+bx = Inches(0.7)
+for icon, title, desc in persp:
+    box(s, bx, Inches(1.55), box_w, Inches(4.1), SMOKE, radius=True)
+    box(s, bx, Inches(1.55), box_w, Inches(0.08), GREEN)
+    txt(s, bx, Inches(1.8), box_w, Inches(1.0), icon, 45,
+        TEAL, align=PP_ALIGN.CENTER)
+    txt(s, bx, Inches(2.95), box_w, Inches(0.55), title, 16,
+        DARK, bold=True, align=PP_ALIGN.CENTER)
+    txt(s, bx, Inches(3.6), box_w, Inches(1.9), desc, 14,
+        GREY, align=PP_ALIGN.CENTER)
+    bx = Emu(bx + box_w + Inches(0.2))
+
+# Prompt Napkin
+box(s, Inches(0.7), Inches(6.0), Inches(11.9), Inches(1.1),
+    RGBColor(0xFF,0xF8,0xE1), radius=True)
+txt(s, Inches(0.95), Inches(6.08), Inches(11.5), Inches(0.9),
+    "💡 Napkin : 4 futuristic roadmap cards going upward — "
+    "Offline mode, QR labels, Multi-site, Analytics dashboard — "
+    "connected by a glowing timeline, blue-green gradient",
+    13, RGBColor(0x99,0x77,0x00), italic=True)
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 15 — CONCLUSION
+# ═════════════════════════════════════════════════════════════════════════════
 s = slide()
-header(s, "Bilan du stage", 23)
-rect(s, Inches(0.7), Inches(1.6), Inches(5.85), Inches(4.9), LIGHT)
-txt(s, Inches(0.7), Inches(1.7), Inches(5.85), Inches(0.5), "Compétences techniques", 18, TEAL, bold=True, align=PP_ALIGN.CENTER)
-bullets(s, Inches(1.0), Inches(2.45), Inches(5.3), Inches(4.0), [
-    "Développement Android natif (Java)",
-    "API REST avec Spring Boot",
-    "Sécurité JWT & Spring Security",
-    "Base PostgreSQL / JPA",
-    "Intégration d'une IA (Gemini)",
-    "Architecture trois tiers en couches",
-], size=15, gap=13)
-rect(s, Inches(6.75), Inches(1.6), Inches(5.85), Inches(4.9), TEAL)
-txt(s, Inches(6.75), Inches(1.7), Inches(5.85), Inches(0.5), "Compétences humaines", 18, WHITE, bold=True, align=PP_ALIGN.CENTER)
-bullets(s, Inches(7.05), Inches(2.45), Inches(5.3), Inches(4.0), [
-    "Analyse d'un besoin métier réel",
-    "Gestion et planification de projet",
-    "Autonomie et organisation",
-    "Communication avec l'encadrante",
-    "Rédaction technique & documentation",
-    "Résolution de problèmes concrets",
-], size=15, color=WHITE, gap=13)
+header(s, "Conclusion", 15)
+txt(s, Inches(1.2), Inches(1.6), Inches(10.9), Inches(1.5),
+    "Ce stage m'a permis de concevoir et développer, de A à Z, une solution "
+    "complète de gestion d'inventaire physique combinant un backend Spring Boot "
+    "sécurisé, une application Android native et une intelligence artificielle "
+    "de reconnaissance d'objets.", 19, DARK)
 
-# ================================================================ 24 — PERSPECTIVES
-s = slide()
-header(s, "Difficultés & perspectives", 24)
-txt(s, Inches(0.7), Inches(1.45), Inches(11.9), Inches(0.5), "Difficultés rencontrées", 18, GREEN, bold=True)
-bullets(s, Inches(1.0), Inches(2.05), Inches(11.5), Inches(2.0), [
-    "Gestion des permissions caméra & du partage de fichiers (FileProvider)",
-    "Robustesse des appels à l'API Gemini (gestion des erreurs et reprises)",
-    "Compatibilité du stockage selon les versions d'Android",
-], size=16, gap=10)
-txt(s, Inches(0.7), Inches(4.1), Inches(11.9), Inches(0.5), "Perspectives d'évolution", 18, TEAL, bold=True)
-bullets(s, Inches(1.0), Inches(4.7), Inches(11.5), Inches(2.2), [
-    "Mode hors-ligne avec synchronisation différée",
-    "Génération et impression d'étiquettes QR depuis l'app",
-    "Statistiques et tableaux de bord analytiques avancés",
-    "Application multi-entreprises et multi-sites",
-], size=16, gap=10)
+box(s, Inches(1.2), Inches(3.35), Inches(10.9), Inches(0.07), GREEN)
 
-# ================================================================ 25 — CONCLUSION
-s = slide()
-header(s, "Conclusion", 25)
-txt(s, Inches(0.9), Inches(1.8), Inches(11.5), Inches(2.5),
-    "Ce stage a permis de concevoir et développer une solution complète et "
-    "fonctionnelle de gestion d'inventaire physique pour CF Consult, combinant "
-    "une application mobile Android, un backend Spring Boot sécurisé et une "
-    "intelligence artificielle de reconnaissance d'objets.", 19, DARK)
-txt(s, Inches(0.9), Inches(4.2), Inches(11.5), Inches(2.0),
-    "La solution transforme un processus manuel, lent et faillible en un outil "
-    "rapide, fiable et traçable — une expérience à la fois technique et "
-    "professionnelle très enrichissante.", 19, TEAL, bold=True)
+apports = [
+    "Maîtrise de l'architecture trois tiers (Android · REST · PostgreSQL)",
+    "Intégration d'une IA dans une solution métier réelle",
+    "Gestion complète d'un projet informatique sur 6 semaines",
+]
+blist(s, Inches(1.4), Inches(3.6), Inches(10.5), Inches(2.0),
+      apports, size=18, color=TEAL, gap=14)
 
-# ================================================================ 26 — MERCI
+txt(s, Inches(1.2), Inches(5.85), Inches(10.9), Inches(1.3),
+    "Une expérience enrichissante qui a transformé un processus manuel "
+    "et faillible en un outil mobile moderne, rapide et intelligent.",
+    18, DARK, italic=True)
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 16 — MERCI
+# ═════════════════════════════════════════════════════════════════════════════
 s = slide()
 bg(s, DARK)
-rect(s, 0, Inches(3.0), SW, Inches(1.5), TEAL)
-txt(s, 0, Inches(2.9), SW, Inches(1.0), "Merci de votre attention", 40, WHITE, bold=True, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
-txt(s, 0, Inches(3.95), SW, Inches(0.7), "Avez-vous des questions ?", 22, WHITE, align=PP_ALIGN.CENTER)
-txt(s, 0, Inches(6.6), SW, Inches(0.5), "Kenza FOUDALI  ·  CF Consult  ·  2025 / 2026", 14, RGBColor(0xBB,0xCC,0xD5), align=PP_ALIGN.CENTER)
+box(s, 0, Inches(2.7), SW, Inches(0.1), TEAL)
+box(s, 0, Inches(4.85), SW, Inches(0.1), GREEN)
+txt(s, 0, Inches(2.9), SW, Inches(1.4),
+    "Merci pour votre attention", 44, WHITE, bold=True,
+    align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+txt(s, 0, Inches(4.3), SW, Inches(0.5),
+    "Avez-vous des questions ?", 22, TEAL,
+    align=PP_ALIGN.CENTER)
+txt(s, 0, Inches(6.75), SW, Inches(0.5),
+    "Kenza FOUDALI  ·  CF Consult  ·  2025 / 2026",
+    13, RGBColor(0x88,0x99,0xAA), align=PP_ALIGN.CENTER)
 
-# ---------------------------------------------------------------- save
+# ── sauvegarde ───────────────────────────────────────────────────────────────
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                    "soutenance_stage_inventaire_cfc.pptx")
 prs.save(out)
-print(f"OK  {out}  ({len(prs.slides._sldIdLst)} slides)")
+print(f"✅  {out}  ({len(prs.slides._sldIdLst)} slides)")
