@@ -174,7 +174,7 @@ txt(s, Inches(1.0), Inches(7.08), Inches(11.4), Inches(0.35),
 s = slide()
 header(s, "Plan de la présentation", 2)
 plan = [
-    ("01", "Introduction & Problématique"),
+    ("01", "Introduction & Contexte"),
     ("02", "Présentation de l'organisme"),
     ("03", "Objectifs du projet"),
     ("04", "Gestion du projet"),
@@ -197,40 +197,53 @@ for col, ox in [(col1, Inches(1.2)), (col2, Inches(7.2))]:
             anchor=MSO_ANCHOR.MIDDLE)
 
 # ═════════════════════════════════════════════════════════════════════════════
-# 3 — INTRODUCTION & PROBLÉMATIQUE
+# 3 — INTRODUCTION & CONTEXTE  (transformation papier → mobile)
 # ═════════════════════════════════════════════════════════════════════════════
 s = slide()
-header(s, "Introduction & Problématique", 3)
+header(s, "Introduction & Contexte", 3)
 
-# contexte
-txt(s, Inches(0.7), Inches(1.35), Inches(11.9), Inches(0.8),
-    "CF Consult réalise des missions d'inventaire physique pour ses clients. "
-    "Aujourd'hui ce processus est entièrement manuel — fiches papier et fichiers Excel.",
+txt(s, Inches(0.7), Inches(1.3), Inches(11.9), Inches(0.85),
+    "CF Consult réalise régulièrement des missions d'inventaire physique sur le "
+    "terrain. L'objectif du projet : faire passer cette activité du papier au "
+    "mobile, avec un outil moderne, rapide et intelligent.",
     17, DARK)
 
-# 2 colonnes
-box(s, Inches(0.7), Inches(2.4), Inches(5.7), Inches(4.2), SMOKE, radius=True)
-box(s, Inches(6.9), Inches(2.4), Inches(5.7), Inches(4.2), TEAL, radius=True)
+# ── HIER (carte grise) ──────────────────────────────────────────────────────
+box(s, Inches(0.7), Inches(2.55), Inches(4.4), Inches(4.3), SMOKE, radius=True)
+txt(s, Inches(0.7), Inches(2.7), Inches(4.4), Inches(0.55),
+    "Hier", 20, GREY, bold=True, align=PP_ALIGN.CENTER)
+txt(s, Inches(0.7), Inches(3.35), Inches(4.4), Inches(1.0),
+    "📋   📝   📊", 40, GREY, align=PP_ALIGN.CENTER)
+blist(s, Inches(1.1), Inches(4.6), Inches(3.7), Inches(2.1), [
+    "Fiches papier sur le terrain",
+    "Re-saisie manuelle sur Excel",
+    "Pas de photo ni de géolocalisation",
+    "Suivi difficile en temps réel",
+], size=14, color=DARK, gap=11, bullet="–")
 
-txt(s, Inches(1.0), Inches(2.55), Inches(5.1), Inches(0.55),
-    "⚠  Problèmes actuels", 17, RGBColor(0xCC,0x33,0x33), bold=True)
-blist(s, Inches(1.0), Inches(3.2), Inches(5.0), Inches(3.2), [
-    "Saisie lente, sources d'erreurs",
-    "Aucun suivi en temps réel",
-    "Pas de responsabilisation par agent",
-    "Pas de preuve photo des biens",
-    "Rapprochement comptable fastidieux",
-], size=15, gap=12)
+# ── FLÈCHE centrale ─────────────────────────────────────────────────────────
+arrow = s.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW,
+                           Inches(5.35), Inches(4.05), Inches(2.6), Inches(1.3))
+arrow.fill.solid(); arrow.fill.fore_color.rgb = GREEN
+arrow.line.fill.background(); arrow.shadow.inherit = False
+txt(s, Inches(5.35), Inches(4.05), Inches(2.6), Inches(1.3),
+    "Digitalisation", 15, WHITE, bold=True,
+    align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+txt(s, Inches(5.35), Inches(3.45), Inches(2.6), Inches(0.5),
+    "Application mobile", 13, GREEN, bold=True, align=PP_ALIGN.CENTER)
 
-txt(s, Inches(7.2), Inches(2.55), Inches(5.1), Inches(0.55),
-    "✓  Solution proposée", 17, WHITE, bold=True)
-blist(s, Inches(7.2), Inches(3.2), Inches(5.0), Inches(3.2), [
-    "Application mobile Android native",
-    "Scan QR code & code-barres",
-    "Reconnaissance d'objet par IA",
-    "Photo & validation des biens",
-    "Export Excel / PDF instantané",
-], size=15, color=WHITE, gap=12)
+# ── AUJOURD'HUI (carte teal) ────────────────────────────────────────────────
+box(s, Inches(8.2), Inches(2.55), Inches(4.4), Inches(4.3), TEAL, radius=True)
+txt(s, Inches(8.2), Inches(2.7), Inches(4.4), Inches(0.55),
+    "Aujourd'hui", 20, WHITE, bold=True, align=PP_ALIGN.CENTER)
+txt(s, Inches(8.2), Inches(3.35), Inches(4.4), Inches(1.0),
+    "📱", 46, WHITE, align=PP_ALIGN.CENTER)
+blist(s, Inches(8.6), Inches(4.6), Inches(3.7), Inches(2.1), [
+    "Scan QR / code-barres instantané",
+    "Photo & reconnaissance par IA",
+    "Saisie & validation en un geste",
+    "Export Excel / PDF immédiat",
+], size=14, color=WHITE, gap=11, bullet="+")
 
 # ═════════════════════════════════════════════════════════════════════════════
 # 4 — PRÉSENTATION DE L'ORGANISME
