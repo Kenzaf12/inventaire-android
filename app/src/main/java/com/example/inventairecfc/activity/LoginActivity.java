@@ -63,6 +63,16 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        // ===== MODE DÉMO (sans backend) : admin / admin =====
+        // Permet de tester l'app et la reconnaissance IA sans serveur.
+        if (login.equalsIgnoreCase("admin") && password.equals("admin")) {
+            sessionManager.saveSession("demo-token", "ADMIN", "Admin", "Démo");
+            Toast.makeText(this, "Connexion démo (hors ligne)", Toast.LENGTH_SHORT).show();
+            goToMain();
+            return;
+        }
+        // =====================================================
+
         btnLogin.setEnabled(false);
 
         Map<String, String> credentials = new HashMap<>();
