@@ -501,10 +501,10 @@ s = slide()
 header(s, "Perspectives d'évolution", 14)
 
 persp = [
-    ("📶", "Mode hors-ligne",   "Synchronisation différée\nquand le réseau revient"),
-    ("🏷", "Étiquettes QR",     "Impression d'étiquettes\ndirectement depuis l'app"),
-    ("🌍", "Multi-sites",       "Gestion de plusieurs\nentreprises et sites"),
-    ("📈", "Analytics avancés", "Tableaux de bord\nstatistiques & KPIs"),
+    ("🔔", "Notifications push", "Firebase Cloud Messaging\npour alerter les responsables"),
+    ("📶", "Mode hors-ligne",   "Room Database (SQLite) +\nsynchronisation différée"),
+    ("🚀", "Migration Kotlin",  "Syntaxe concise &\ncoroutines pour l'asynchrone"),
+    ("🧪", "Tests unitaires",   "JUnit (backend) &\nEspresso (UI Android)"),
 ]
 box_w = Inches(2.9)
 bx = Inches(0.7)
@@ -524,7 +524,7 @@ box(s, Inches(0.7), Inches(6.0), Inches(11.9), Inches(1.1),
     RGBColor(0xFF,0xF8,0xE1), radius=True)
 txt(s, Inches(0.95), Inches(6.08), Inches(11.5), Inches(0.9),
     "💡 Napkin : 4 futuristic roadmap cards going upward — "
-    "Offline mode, QR labels, Multi-site, Analytics dashboard — "
+    "Push notifications, Offline mode, Kotlin migration, Unit testing — "
     "connected by a glowing timeline, blue-green gradient",
     13, RGBColor(0x99,0x77,0x00), italic=True)
 
