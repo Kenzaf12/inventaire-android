@@ -8,29 +8,30 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
 
 W, H = landscape(A4)
-TEAL   = colors.HexColor("#1E8875")
-LTEAL  = colors.HexColor("#E8F7F3")
-DARK   = colors.HexColor("#1A1A2E")
-GREY   = colors.HexColor("#444444")
-LGREY  = colors.HexColor("#F5F5F5")
+# Nouvelle palette : indigo / violet
+TEAL   = colors.HexColor("#4338CA")   # indigo principal
+LTEAL  = colors.HexColor("#EEF0FF")   # fond clair indigo
+DARK   = colors.HexColor("#1E1B4B")   # texte titre fonce
+GREY   = colors.HexColor("#2D2D2D")   # corps de texte plus fonce/lisible
+LGREY  = colors.HexColor("#F4F4FB")
 WHITE  = colors.white
 
 styles = getSampleStyleSheet()
 def S(name, **kw):
     return ParagraphStyle(name, parent=styles["Normal"], **kw)
 
-SECHEAD = S("sech",  fontSize=14, textColor=WHITE, backColor=TEAL, leading=22, fontName="Helvetica-Bold", leftIndent=8, spaceBefore=10, spaceAfter=6)
-SLNUM   = S("slnum", fontSize=10, textColor=TEAL,  fontName="Helvetica-Bold", spaceBefore=10, spaceAfter=1)
-SLTIT   = S("sltit", fontSize=13, textColor=DARK,  fontName="Helvetica-Bold", spaceBefore=1, spaceAfter=4)
-BODY    = S("body",  fontSize=11, textColor=GREY,  leading=16, spaceAfter=5, firstLineIndent=8)
-CAT     = S("cat",   fontSize=12, textColor=TEAL,  fontName="Helvetica-Bold", spaceBefore=10, spaceAfter=4)
-Q_S     = S("q",     fontSize=11, textColor=TEAL,  fontName="Helvetica-Bold", backColor=LTEAL, leftIndent=6, leading=16, spaceBefore=8, spaceAfter=3)
-A_S     = S("a",     fontSize=11, textColor=colors.HexColor("#333333"), leading=16, leftIndent=12, spaceAfter=4)
+SECHEAD = S("sech",  fontSize=17, textColor=WHITE, backColor=TEAL, leading=26, fontName="Helvetica-Bold", leftIndent=8, spaceBefore=10, spaceAfter=8)
+SLNUM   = S("slnum", fontSize=12, textColor=TEAL,  fontName="Helvetica-Bold", spaceBefore=12, spaceAfter=1)
+SLTIT   = S("sltit", fontSize=15, textColor=DARK,  fontName="Helvetica-Bold", spaceBefore=1, spaceAfter=5)
+BODY    = S("body",  fontSize=13, textColor=GREY,  leading=19, spaceAfter=6, firstLineIndent=8)
+CAT     = S("cat",   fontSize=14, textColor=TEAL,  fontName="Helvetica-Bold", spaceBefore=12, spaceAfter=4)
+Q_S     = S("q",     fontSize=13, textColor=TEAL,  fontName="Helvetica-Bold", backColor=LTEAL, leftIndent=6, leading=19, spaceBefore=10, spaceAfter=3)
+A_S     = S("a",     fontSize=13, textColor=colors.HexColor("#222222"), leading=19, leftIndent=12, spaceAfter=5)
 
 doc = SimpleDocTemplate(
     "/home/user/inventaire-android/script_soutenance_kenza_complet.pdf",
     pagesize=landscape(A4),
-    leftMargin=1.8*cm, rightMargin=1.8*cm, topMargin=2.2*cm, bottomMargin=1.8*cm,
+    leftMargin=1.6*cm, rightMargin=1.6*cm, topMargin=1.2*cm, bottomMargin=1.4*cm,
     title="Script Soutenance Complet - Kenza FOUDALI"
 )
 story = []
@@ -38,7 +39,7 @@ story = []
 def cover_page(canvas, doc):
     canvas.saveState()
     canvas.setFillColor(TEAL); canvas.rect(0, 0, W, H, fill=1, stroke=0)
-    canvas.setFillColor(colors.HexColor("#16705F")); canvas.rect(0, H*0.55, W, H*0.45, fill=1, stroke=0)
+    canvas.setFillColor(colors.HexColor("#312E81")); canvas.rect(0, H*0.55, W, H*0.45, fill=1, stroke=0)
     canvas.setFillColor(WHITE)
     canvas.setFont("Helvetica-Bold", 32); canvas.drawCentredString(W/2, H*0.6, "SCRIPT DE SOUTENANCE")
     canvas.setFont("Helvetica", 18); canvas.drawCentredString(W/2, H*0.52, "Inventaire Mobile CFC - Application Android")
@@ -48,12 +49,9 @@ def cover_page(canvas, doc):
 
 def on_page(canvas, doc):
     canvas.saveState()
-    canvas.setFillColor(TEAL); canvas.rect(0, H-1.5*cm, W, 1.5*cm, fill=1, stroke=0)
-    canvas.setFillColor(WHITE); canvas.setFont("Helvetica-Bold", 10)
-    canvas.drawCentredString(W/2, H-1.0*cm, "SCRIPT DE SOUTENANCE - Inventaire Mobile CFC   |   Kenza FOUDALI")
-    canvas.setFillColor(LGREY); canvas.rect(0, 0, W, 1.0*cm, fill=1, stroke=0)
+    # Pas de barre de titre en haut (elle cachait le script) — juste la pagination
     canvas.setFillColor(GREY); canvas.setFont("Helvetica", 8)
-    canvas.drawCentredString(W/2, 0.35*cm, f"Page {doc.page}")
+    canvas.drawCentredString(W/2, 0.5*cm, f"Page {doc.page}")
     canvas.restoreState()
 
 # ─── PARTIE 1 : SCRIPT DETAILLE ──────────────────────────────────────────────
